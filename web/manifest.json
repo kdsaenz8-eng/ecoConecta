@@ -1,0 +1,19 @@
+{
+  "name": "EcoConecta - TRL 5",
+  "short_name": "EcoConecta",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#F9FBF9",
+  "theme_color": "#2E7D32",
+  "description": "Plataforma colaborativa para la recolección de residuos aprovechables en el municipio, Antioquia.",
+  "orientation": "portrait-primary",
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "favicon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}
+

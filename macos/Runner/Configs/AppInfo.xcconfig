@@ -1,0 +1,4 @@
+PRODUCT_NAME = ecoconecta_frontend
+PRODUCT_BUNDLE_IDENTIFIER = co.ecoconecta.ecoconecta
+PRODUCT_COPYRIGHT = Copyright © 2026 EcoConecta. All rights reserved.
+
