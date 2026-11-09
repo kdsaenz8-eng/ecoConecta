@@ -3,7 +3,10 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>EcoConecta — Red Comunitaria de Reciclaje en el municipio</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="manifest" href="manifest.json">
@@ -67,24 +70,29 @@
     header {
       background: var(--blanco);
       border-bottom: 1px solid var(--borde);
-      padding: 14px 28px;
+      padding: 12px 20px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       position: sticky;
       top: 0;
       z-index: 1000;
+      flex-wrap: wrap;
+      gap: 10px;
+      box-sizing: border-box;
     }
 
     .marca {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
+      flex-shrink: 0;
+      min-width: 0;
     }
 
     .marca-emblema {
-      width: 40px;
-      height: 40px;
+      width: 38px;
+      height: 38px;
       border-radius: 10px;
       background: var(--verde-bosque);
       color: white;
@@ -92,38 +100,54 @@
       align-items: center;
       justify-content: center;
       font-weight: 700;
-      font-size: 1.2rem;
+      font-size: 1.15rem;
+      flex-shrink: 0;
+    }
+
+    .marca-texto {
+      min-width: 0;
     }
 
     .marca-texto h1 {
-      font-size: 1.18rem;
+      font-size: 1.15rem;
       font-weight: 700;
       color: var(--texto-titulos);
       letter-spacing: -0.01em;
+      line-height: 1.2;
     }
 
-    .marca-texto span {
-      font-size: 0.8rem;
+    .marca-texto span.subtitulo-municipal {
+      font-size: 0.78rem;
       color: var(--texto-suave);
       display: block;
+      white-space: nowrap;
+    }
+
+    .marca-texto span.subtitulo-largo {
+      display: none;
     }
 
     .cabecera-derecha {
       display: flex;
       align-items: center;
-      gap: 14px;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      min-width: 0;
     }
 
     .estado-red {
       display: flex;
       align-items: center;
-      gap: 6px;
-      font-size: 0.8rem;
+      gap: 5px;
+      font-size: 0.74rem;
       color: var(--verde-fresco);
-      font-weight: 500;
+      font-weight: 600;
       background: var(--verde-claro);
-      padding: 5px 12px;
+      padding: 4px 10px;
       border-radius: 20px;
+      white-space: nowrap;
+      flex-shrink: 0;
     }
 
     .punto-red {
@@ -136,24 +160,46 @@
     .usuario-chip {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
       background: #f3f4f6;
-      padding: 6px 14px;
+      padding: 5px 12px;
       border-radius: 20px;
-      font-size: 0.85rem;
+      font-size: 0.78rem;
       font-weight: 600;
       color: var(--texto-titulos);
+      max-width: 200px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-width: 0;
+      flex-shrink: 1;
+    }
+
+    #chip-nombre {
+      max-width: 100px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: inline-block;
+      vertical-align: middle;
+    }
+
+    #chip-rol {
+      white-space: nowrap;
+      flex-shrink: 0;
     }
 
     .btn-salir {
       background: none;
       border: 1px solid var(--borde);
-      padding: 6px 12px;
+      padding: 5px 10px;
       border-radius: 8px;
-      font-size: 0.8rem;
+      font-size: 0.75rem;
       color: #b91c1c;
       font-weight: 600;
       cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
     }
 
     .btn-salir:hover {
@@ -224,13 +270,17 @@
       background: var(--fondo);
       border: 1px solid var(--borde);
       border-radius: 10px;
-      padding: 12px 14px;
+      padding: 10px 14px;
       cursor: pointer;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      gap: 10px;
       transition: all 0.15s ease;
       text-align: left;
+      min-width: 0;
+      width: 100%;
+      box-sizing: border-box;
     }
 
     .tarjeta-usuario-real:hover {
@@ -240,26 +290,38 @@
       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
     }
 
+    .tarjeta-usuario-real>div:first-child {
+      flex: 1 1 auto;
+      min-width: 0;
+      overflow: hidden;
+    }
+
     .tarjeta-usuario-real strong {
       display: block;
-      font-size: 0.88rem;
+      font-size: 0.86rem;
       color: var(--texto-titulos);
       margin-bottom: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .tarjeta-usuario-real span {
-      font-size: 0.78rem;
+      font-size: 0.74rem;
       color: var(--texto-suave);
       display: block;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .tarjeta-usuario-real .etiqueta-rol {
-      padding: 4px 10px;
+      padding: 3px 8px;
       border-radius: 6px;
-      font-size: 0.74rem;
+      font-size: 0.7rem;
       font-weight: 700;
       white-space: nowrap;
-      margin-left: 10px;
+      flex-shrink: 0;
     }
 
     .etiqueta-rol.generador {
@@ -633,18 +695,167 @@
     @media (max-width: 640px) {
       .grid-dos {
         grid-template-columns: 1fr;
+        gap: 12px;
       }
 
       .selector-perfil {
         grid-template-columns: 1fr;
+        gap: 10px;
       }
 
       header {
-        padding: 12px 16px;
+        padding: 8px 12px;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .marca {
+        gap: 8px;
+        flex: 1 1 auto;
+        min-width: 0;
+      }
+
+      .marca-emblema {
+        width: 34px;
+        height: 34px;
+        font-size: 1.1rem;
+        flex-shrink: 0;
+      }
+
+      .marca-texto h1 {
+        font-size: 1.05rem;
+        white-space: nowrap;
       }
 
       .marca-texto span {
         display: none;
+      }
+
+      .cabecera-derecha {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+      }
+
+      .estado-red {
+        padding: 4px 8px;
+        font-size: 0.72rem;
+        white-space: nowrap;
+      }
+
+      .usuario-chip {
+        padding: 4px 8px;
+        font-size: 0.75rem;
+        max-width: 175px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      #chip-nombre {
+        display: inline-block;
+        max-width: 95px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        vertical-align: middle;
+      }
+
+      #chip-rol {
+        white-space: nowrap;
+      }
+
+      .btn-salir {
+        padding: 4px 8px;
+        font-size: 0.72rem;
+        white-space: nowrap;
+      }
+
+      main {
+        padding: 0 10px;
+        margin: 12px auto;
+      }
+
+      .tarjeta {
+        padding: 16px 14px;
+        border-radius: 12px;
+        margin-bottom: 16px;
+      }
+
+      .materiales-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+      }
+
+      .material-item {
+        padding: 10px 6px;
+        font-size: 0.8rem;
+        text-align: center;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .tarjeta-usuario-real {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+        padding: 10px 12px;
+      }
+
+      .tarjeta-usuario-real>div:first-child {
+        width: 100%;
+        flex: none;
+      }
+
+      .tarjeta-usuario-real strong,
+      .tarjeta-usuario-real span {
+        white-space: normal;
+        word-break: break-word;
+      }
+
+      .tarjeta-usuario-real .etiqueta-rol {
+        align-self: flex-start;
+        margin-left: 0;
+        margin-top: 2px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      header {
+        padding: 8px 10px;
+        gap: 6px;
+      }
+
+      .marca-emblema {
+        width: 32px;
+        height: 32px;
+        font-size: 1rem;
+      }
+
+      .marca-texto h1 {
+        font-size: 0.95rem;
+      }
+
+      .estado-red {
+        padding: 3px 6px;
+        font-size: 0.68rem;
+      }
+
+      .usuario-chip {
+        padding: 3px 8px;
+        font-size: 0.72rem;
+        max-width: 140px;
+      }
+
+      #chip-nombre {
+        max-width: 70px;
+      }
+
+      .btn-salir {
+        padding: 4px 6px;
+        font-size: 0.7rem;
       }
     }
 
@@ -844,9 +1055,8 @@
       <div class="marca-emblema">♻</div>
       <div class="marca-texto">
         <h1>EcoConecta</h1>
-        <span>Coordinación de reciclaje municipal</span>
-        <span>Diseño e implementación de una plataforma digital para optimizar la coordinación de la recolección de
-          residuos aprovechables en el municipio de Chigorodó, Antioquia.</span>
+        <span class="subtitulo-municipal">Diseño e implementación de una plataforma digital para optimizar la
+          coordinación de la recolección de residuos aprovechables en el municipio de Chigorodó, Antioquia.</span>
       </div>
     </div>
 
@@ -1238,10 +1448,47 @@
     // =========================================================================
     // INTEGRACIÓN CON BASE DE DATOS REAL (SQLITE3 / BACKEND REST API)
     // =========================================================================
+    function getApiEndpoint(ruta) {
+      if (!ruta) return '';
+      if (ruta.startsWith('http://') || ruta.startsWith('https://')) {
+        return ruta;
+      }
+      let base = '';
+      if (window.API_BASE_URL && typeof window.API_BASE_URL === 'string' && window.API_BASE_URL.length > 0) {
+        base = window.API_BASE_URL;
+      } else {
+        const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
+        const hostname = (window.location.hostname && window.location.hostname.length > 0) ? window.location.hostname : 'localhost';
+        const port = window.location.port;
+        if (port === '8080' || port === '8000') {
+          base = `${protocol}//${window.location.host}/api/v1`;
+        } else {
+          // Si estamos en un servidor de desarrollo estático o Live Server (ej: puerto 63834, 5500, etc.)
+          base = `${protocol}//${hostname}:8080/api/v1`;
+        }
+      }
+
+      const cleanPath = ruta.startsWith('/') ? ruta : `/${ruta}`;
+      const cleanBase = base.endsWith('/') ? base.slice(0, -1) : base;
+
+      let resolved = '';
+      if (cleanPath.startsWith('/api/v1/')) {
+        const hostOnly = cleanBase.replace(/\/api\/v1\/?$/, '');
+        resolved = `${hostOnly}${cleanPath}`;
+      } else {
+        resolved = `${cleanBase}${cleanPath}`;
+      }
+      return resolved;
+    }
+
     async function sincronizarDesdeBaseDatosReal() {
+      // Las rutas de datos requieren obligatoriamente token JWT Bearer autenticado
+      if (!tokenJwtActivo || !validarTokenJwtLocal(tokenJwtActivo)) {
+        return;
+      }
       try {
-        const resp = await fetch('/api/v1/pickups');
-        if (resp.ok) {
+        const resp = await apiFetchSeguro('/api/v1/pickups');
+        if (resp && resp.ok) {
           const datos = await resp.json();
           if (Array.isArray(datos) && datos.length > 0) {
             solicitudes = datos.map(p => ({
@@ -1265,7 +1512,7 @@
           }
         }
       } catch (err) {
-        console.warn('Conectando a base de datos persistente local:', err);
+        console.warn('[AUTH SYNC] Consulta segura de solicitudes cancelada:', err);
       }
     }
 
@@ -1276,9 +1523,13 @@
     ];
 
     async function cargarRecicladoresDesdeBD() {
+      // Ruta protegida con JWT Bearer
+      if (!tokenJwtActivo || !validarTokenJwtLocal(tokenJwtActivo)) {
+        return;
+      }
       try {
-        const resp = await fetch('/api/v1/users/recyclers');
-        if (resp.ok) {
+        const resp = await apiFetchSeguro('/api/v1/users/recyclers');
+        if (resp && resp.ok) {
           const recs = await resp.json();
           if (Array.isArray(recs) && recs.length > 0) {
             listaRecicladores = recs.map(r => {
@@ -1302,7 +1553,7 @@
           }
         }
       } catch (err) {
-        console.warn('Error cargando recicladores:', err);
+        console.warn('[AUTH RECYCLERS] Consulta segura de recicladores cancelada:', err);
       }
     }
 
@@ -1371,7 +1622,9 @@
 
     function iniciarWebSocket() {
       // Intentar enlace con el Backend FastAPI en el puerto 8000 si estamos en desarrollo
-      const host = window.location.port === '8080' ? `${window.location.hostname}:8000` : window.location.host;
+      const host = (window.location.port === '8080' || window.location.port === '8000')
+        ? window.location.host
+        : `${window.location.hostname}:8080`;
       const protocolo = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       const url = `${protocolo}//${host}/api/v1/ws`;
 
@@ -1484,7 +1737,7 @@
       mostrarLoadingSesion('Iniciando sesión...', 'Conectando con la base de datos municipal y validando tus credenciales...');
 
       try {
-        const resp = await fetch('/api/v1/auth/login', {
+        const resp = await fetch(getApiEndpoint('/api/v1/auth/login'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email: correo, password: clave })
@@ -1514,17 +1767,9 @@
           mostrarAviso(`Error: ${err.detail || 'No se pudo iniciar sesión'}`);
         }
       } catch (e) {
-        console.warn('Conectando por fallback directo:', e);
-        setTimeout(() => {
-          ocultarLoadingSesion();
-          if (correo.includes('recicla') || correo.includes('mena')) {
-            ingresoRapido('RECICLADOR');
-          } else if (correo.includes('admin') || correo.includes('pgirs') || correo.includes('alcaldia')) {
-            ingresoRapido('ADMINISTRADOR');
-          } else {
-            ingresoRapido('GENERADOR');
-          }
-        }, 500);
+        console.error('[AUTH ERROR] Error conectando con el servidor:', e);
+        ocultarLoadingSesion();
+        mostrarAviso('Error de conexión con el servidor. Verifica que el backend esté activo.');
       }
     }
 
@@ -1565,7 +1810,7 @@
       mostrarLoadingSesion('Iniciando sesión...', 'Comprobando tus datos de acceso en la red municipal...');
 
       try {
-        const resp = await fetch('/api/v1/auth/login', {
+        const resp = await fetch(getApiEndpoint('/api/v1/auth/login'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email: correo, password: clave })
@@ -1588,23 +1833,16 @@
           }, 600);
           return;
         } else {
+          const err = await resp.json().catch(() => ({}));
           ocultarLoadingSesion();
-          mostrarAviso('Correo o contraseña incorrectos.');
+          mostrarAviso(`Error de acceso: ${err.detail || 'Correo o contraseña incorrectos.'}`);
           return;
         }
-      } catch (_) { }
-
-      setTimeout(() => {
+      } catch (err) {
+        console.error('[AUTH ERROR] Error en inicio de sesión:', err);
         ocultarLoadingSesion();
-        // Fallback amigable
-        if (correo.includes('recicla') || correo.includes('mena')) {
-          ingresoRapido('RECICLADOR');
-        } else if (correo.includes('admin') || correo.includes('alcaldia')) {
-          ingresoRapido('ADMINISTRADOR');
-        } else {
-          ingresoRapido('GENERADOR');
-        }
-      }, 500);
+        mostrarAviso('Error de comunicación con el servicio de autenticación.');
+      }
     }
 
     async function procesarRegistro(e) {
@@ -1625,7 +1863,7 @@
       mostrarLoadingSesion('Creando tu cuenta...', 'Registrando tu usuario de forma segura con consentimiento legal de Ley 1581...');
 
       try {
-        const resp = await fetch('/api/v1/auth/register', {
+        const resp = await fetch(getApiEndpoint('/api/v1/auth/register'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -1666,29 +1904,17 @@
           ocultarLoadingSesion();
           mostrarAviso('Este correo ya está registrado. Por favor inicia sesión.');
           return;
+        } else {
+          const err = await resp.json().catch(() => ({}));
+          ocultarLoadingSesion();
+          mostrarAviso(`Error en registro: ${err.detail || 'No se pudo crear la cuenta.'}`);
+          return;
         }
-      } catch (_) { }
-
-      setTimeout(() => {
+      } catch (err) {
+        console.error('[AUTH ERROR] Error en registro:', err);
         ocultarLoadingSesion();
-        // Fallback local
-        usuarioActivo = {
-          id: 'usr-' + Date.now().toString(36),
-          nombre: nombre,
-          rol: rolRegistroSeleccionado,
-          barrio: barrio,
-          telefono: telefono
-        };
-
-        registrosAuditoria.unshift({
-          fecha: 'Hoy, hace un momento',
-          usuario: correo,
-          accion: 'Aceptó política de datos al registrarse'
-        });
-
-        aplicarEstadoSesion();
-        mostrarAviso(`¡Bienvenido a EcoConecta, ${nombre}!`);
-      }, 500);
+        mostrarAviso('Error de conexión al procesar el registro.');
+      }
     }
 
     // =========================================================================
@@ -1735,7 +1961,8 @@
         headers['Content-Type'] = 'application/json';
       }
 
-      const respuesta = await fetch(url, { ...opciones, headers });
+      const urlFinal = getApiEndpoint(url);
+      const respuesta = await fetch(urlFinal, { ...opciones, headers });
 
       if (respuesta.status === 401) {
         mostrarAviso('Acceso denegado: Token JWT inválido.');
@@ -1811,6 +2038,10 @@
       // Si existe un token JWT, lo validamos y guardamos
       if (tokenJwtActivo && validarTokenJwtLocal(tokenJwtActivo)) {
         guardarSesionSegura(usuarioActivo, tokenJwtActivo);
+      } else {
+        console.warn('Intento de iniciar sesión sin token JWT válido');
+        cerrarSesion();
+        return;
       }
 
       document.getElementById('vista-autenticacion').style.display = 'none';
@@ -1824,6 +2055,10 @@
       document.getElementById('vista-reciclador').style.display = usuarioActivo.rol === 'RECICLADOR' ? 'block' : 'none';
       document.getElementById('vista-administrador').style.display = usuarioActivo.rol === 'ADMINISTRADOR' ? 'block' : 'none';
 
+      // Sincronizar datos reales del backend usando la sesión JWT activa
+      sincronizarDesdeBaseDatosReal();
+      cargarRecicladoresDesdeBD();
+
       if (usuarioActivo.rol === 'GENERADOR') {
         renderizarHistorialGenerador();
         setTimeout(inicializarMapaSelectorGenerador, 250);
@@ -1834,6 +2069,7 @@
 
     function cerrarSesion() {
       usuarioActivo = null;
+      tokenJwtActivo = null;
       try {
         localStorage.removeItem(CLAVE_STORAGE_SESION);
       } catch (_) { }
@@ -2327,7 +2563,7 @@
       const nombreAsignado = rec.nombre || rec.full_name || rec.name || 'Reciclador';
 
       try {
-        await apiFetchSeguro(`/api/v1/pickups/${solicitudId}/assign`, {
+        await apiFetchSeguro(`/api/v1/pickups/${solicitudId}/assign?recycler_id=${rec.id}`, {
           method: 'POST',
           body: JSON.stringify({ recycler_id: rec.id })
         });
@@ -2381,10 +2617,11 @@
       const barra = document.getElementById('carga-barra');
       const estado = document.getElementById('carga-estado');
       const pantalla = document.getElementById('pantalla-carga');
+      if (!pantalla) return;
 
       const pasos = [
-        { pct: 25, texto: 'Conectando con la red comunitaria del municipio...' },
-        { pct: 55, texto: 'Cargando sectores de Kennedy, El Bosque y Los Balsos...' },
+        { pct: 30, texto: 'Conectando con la red comunitaria del municipio...' },
+        { pct: 60, texto: 'Cargando sectores de Kennedy, El Bosque y Los Balsos...' },
         { pct: 85, texto: 'Verificando rutas y canales en tiempo real...' },
         { pct: 100, texto: '¡Todo listo!' }
       ];
@@ -2392,16 +2629,28 @@
       let pasoIdx = 0;
       const intervalo = setInterval(() => {
         if (pasoIdx < pasos.length) {
-          barra.style.width = pasos[pasoIdx].pct + '%';
-          estado.innerText = pasos[pasoIdx].texto;
+          if (barra) barra.style.width = pasos[pasoIdx].pct + '%';
+          if (estado) estado.innerText = pasos[pasoIdx].texto;
           pasoIdx++;
         } else {
           clearInterval(intervalo);
           setTimeout(() => {
             pantalla.classList.add('oculta');
-          }, 400);
+            setTimeout(() => {
+              pantalla.style.display = 'none';
+            }, 500);
+          }, 200);
         }
-      }, 350);
+      }, 250);
+
+      // Respaldo de seguridad absoluto: la pantalla de carga nunca se quedará congelada
+      setTimeout(() => {
+        clearInterval(intervalo);
+        pantalla.classList.add('oculta');
+        setTimeout(() => {
+          pantalla.style.display = 'none';
+        }, 500);
+      }, 2500);
     }
 
     // Inicio automático del canal en vivo y pantalla de carga al abrir la aplicación
@@ -2418,16 +2667,10 @@
         console.warn('Error iniciando socket:', e);
       }
 
-      try {
+      // Si existe una sesión activa y token válido, se cargan los datos autenticados
+      if (tokenJwtActivo && validarTokenJwtLocal(tokenJwtActivo)) {
         sincronizarDesdeBaseDatosReal();
-      } catch (e) {
-        console.warn('Error sincronizando BD:', e);
-      }
-
-      try {
         cargarRecicladoresDesdeBD();
-      } catch (e) {
-        console.warn('Error cargando recicladores:', e);
       }
 
       ejecutarCargaInicial();
