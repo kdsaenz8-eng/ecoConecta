@@ -239,9 +239,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   Text(
-                    'Coordinación de reciclaje municipal',
+                    'Diseño e implementación de una plataforma digital para optimizar la coordinación de la recolección de residuos aprovechables en el municipio de Chigorodó, Antioquia.',
                     style: TextStyle(
-                      fontSize: isCompact ? 11 : 12,
+                      fontSize: isCompact ? 10 : 11,
                       fontWeight: FontWeight.w500,
                       color: const Color(0xFF64748B),
                     ),

@@ -104,7 +104,7 @@ class InstitutionalHeader extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        'Coordinación de reciclaje municipal',
+                        'Diseño e implementación de una plataforma digital para optimizar la coordinación de la recolección de residuos aprovechables en el municipio de Chigorodó, Antioquia.',
                         style: TextStyle(
                           fontSize: isCompact ? 10 : 11,
                           fontWeight: FontWeight.w500,
@@ -158,7 +158,8 @@ class InstitutionalHeader extends StatelessWidget {
               children: <Widget>[
                 Expanded(
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
                       color: const Color(0xFFF1F5F9),
                       borderRadius: BorderRadius.circular(20),
@@ -166,7 +167,8 @@ class InstitutionalHeader extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: <Widget>[
-                        const Icon(Icons.person, size: 16, color: Color(0xFF15803D)),
+                        const Icon(Icons.person,
+                            size: 16, color: Color(0xFF15803D)),
                         const SizedBox(width: 6),
                         Flexible(
                           child: Text(
@@ -196,7 +198,8 @@ class InstitutionalHeader extends StatelessWidget {
                 const SizedBox(width: 8),
                 TextButton.icon(
                   style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     foregroundColor: const Color(0xFFDC2626),
                     backgroundColor: const Color(0xFFFEE2E2),
                     shape: RoundedRectangleBorder(
@@ -207,7 +210,8 @@ class InstitutionalHeader extends StatelessWidget {
                   icon: const Icon(Icons.logout, size: 14),
                   label: const Text(
                     'Cerrar sesión',
-                    style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700),
+                    style:
+                        TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700),
                   ),
                 ),
               ],
@@ -218,4 +222,3 @@ class InstitutionalHeader extends StatelessWidget {
     );
   }
 }
-
