@@ -456,22 +456,25 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      CheckboxListTile(
-                        contentPadding: EdgeInsets.zero,
-                        activeColor: AppTheme.primaryGreen,
-                        controlAffinity: ListTileControlAffinity.leading,
-                        value: _habeasDataAccepted,
-                        onChanged: (bool? checked) {
-                          setState(() {
-                            _habeasDataAccepted = checked ?? false;
-                          });
-                        },
-                        title: const Text(
-                          'Autorizo el tratamiento de mis datos de contacto para la coordinación del reciclaje en el municipio (Ley 1581/2012)',
-                          style: TextStyle(
-                            fontSize: 14.5,
-                            fontWeight: FontWeight.w600,
-                            color: AppTheme.highContrastText,
+                      Material(
+                        color: Colors.transparent,
+                        child: CheckboxListTile(
+                          contentPadding: EdgeInsets.zero,
+                          activeColor: AppTheme.primaryGreen,
+                          controlAffinity: ListTileControlAffinity.leading,
+                          value: _habeasDataAccepted,
+                          onChanged: (bool? checked) {
+                            setState(() {
+                              _habeasDataAccepted = checked ?? false;
+                            });
+                          },
+                          title: const Text(
+                            'Autorizo el tratamiento de mis datos de contacto para la coordinación del reciclaje en el municipio (Ley 1581/2012)',
+                            style: TextStyle(
+                              fontSize: 14.5,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.highContrastText,
+                            ),
                           ),
                         ),
                       ),

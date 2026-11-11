@@ -1493,22 +1493,33 @@
         return;
       }
       try {
-        const resp = await apiFetchSeguro('/api/v1/pickups');
+        // En producción FastAPI los endpoints especializados son /pending (reciclador/admin) y /my-requests (generador)
+        let ruta = '/api/v1/pickups/pending';
+        if (usuarioActivo && usuarioActivo.rol === 'GENERADOR') {
+          ruta = '/api/v1/pickups/my-requests';
+        }
+
+        let resp = await apiFetchSeguro(ruta);
+        // Fallback a /pickups general si la ruta específica no responde
+        if (!resp || !resp.ok) {
+          resp = await apiFetchSeguro('/api/v1/pickups');
+        }
+
         if (resp && resp.ok) {
           const datos = await resp.json();
           if (Array.isArray(datos) && datos.length > 0) {
             solicitudes = datos.map(p => ({
               id: p.id,
               generador_id: p.generator_id,
-              generador_nombre: p.generator_name,
-              generador_telefono: p.generator_phone,
-              barrio: p.neighborhood,
-              direccion: p.address_text,
+              generador_nombre: p.generator_name || 'Generador Comunitario',
+              generador_telefono: p.generator_phone || p.phone || '',
+              barrio: p.neighborhood || p.generator_neighborhood || 'Sector Urbano',
+              direccion: p.address_text || 'Coordenadas GPS fijadas en mapa',
               materiales: p.waste_categories || ['Plástico y Botellas'],
               volumen: p.estimated_volume,
-              estado: p.status,
-              lat: parseFloat(p.latitude),
-              lon: parseFloat(p.longitude),
+              estado: (p.status === 'PENDIENTE' || p.status === 'Pendiente') ? 'Pendiente' : (p.status === 'ACEPTADA' ? 'Aceptada' : (p.status === 'EN_CAMINO' ? 'En_Ruta' : (p.status === 'COMPLETADA' ? 'Completada' : p.status))),
+              lat: parseFloat(p.latitude) || 7.666925,
+              lon: parseFloat(p.longitude) || -76.681140,
               reciclador_id: p.recycler_id,
               reciclador_nombre: p.recycler_name || 'Pendiente de asignar',
               foto_url: p.photo_url,
@@ -1623,7 +1634,14 @@
     // =========================================================================
     // CANAL DE COMUNICACIÓN EN VIVO (WEBSOCKET REAL & MULTIPESTAÑA)
     // =========================================================================
-    const canalLocal = new BroadcastChannel('ecoconecta_vivo_ecoconecta');
+    let canalLocal = null;
+    try {
+      if (typeof BroadcastChannel !== 'undefined') {
+        canalLocal = new BroadcastChannel('ecoconecta_vivo_ecoconecta');
+      }
+    } catch (_) {
+      canalLocal = null;
+    }
     let socket = null;
 
     function iniciarWebSocket() {
@@ -1655,9 +1673,11 @@
         document.getElementById('texto-conexion').innerText = 'Red local activa';
       }
 
-      canalLocal.onmessage = (e) => {
-        procesarEventoEnVivo(e.data);
-      };
+      if (canalLocal) {
+        canalLocal.onmessage = (e) => {
+          procesarEventoEnVivo(e.data);
+        };
+      }
     }
 
     function emitirCambio(tipo, datos) {
@@ -1665,7 +1685,11 @@
       if (socket && socket.readyState === WebSocket.OPEN) {
         socket.send(JSON.stringify(paquete));
       }
-      canalLocal.postMessage(paquete);
+      if (canalLocal) {
+        try {
+          canalLocal.postMessage(paquete);
+        } catch (_) {}
+      }
       procesarEventoEnVivo(paquete);
     }
 
@@ -2184,47 +2208,46 @@
 
       if (avisoPermiso) avisoPermiso.style.display = 'block';
 
-      const opcionesGPS = {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0
-      };
+      function fijarCoords(lat, lon, precision) {
+        if (avisoPermiso) avisoPermiso.style.display = 'none';
+        actualizarCoordenadasGenerador(lat, lon);
 
+        if (mapaSelectorGenerador && marcadorSelectorGenerador) {
+          marcadorSelectorGenerador.setLatLng([lat, lon]);
+          mapaSelectorGenerador.setView([lat, lon], 17);
+          setTimeout(() => {
+            if (mapaSelectorGenerador) mapaSelectorGenerador.invalidateSize();
+          }, 150);
+        }
+        if (esManual) {
+          mostrarAviso(`🎯 Ubicación GPS fijada (Precisión: ±${Math.round(precision || 10)}m)`);
+        }
+      }
+
+      // Intento 1: Alta precisión (Satélite / GPS hardware)
       navigator.geolocation.getCurrentPosition(
         (posicion) => {
-          if (avisoPermiso) avisoPermiso.style.display = 'none';
-          const lat = posicion.coords.latitude;
-          const lon = posicion.coords.longitude;
-
-          actualizarCoordenadasGenerador(lat, lon);
-
-          if (mapaSelectorGenerador && marcadorSelectorGenerador) {
-            marcadorSelectorGenerador.setLatLng([lat, lon]);
-            mapaSelectorGenerador.setView([lat, lon], 17);
-          }
-          mostrarAviso('Ubicación GPS fijada automáticamente con precisión');
+          fijarCoords(posicion.coords.latitude, posicion.coords.longitude, posicion.coords.accuracy);
         },
-        (error) => {
-          if (avisoPermiso) avisoPermiso.style.display = 'none';
-          let mensajeError = 'No se pudo obtener la ubicación GPS.';
-          switch (error.code) {
-            case error.PERMISSION_DENIED:
-              mensajeError = 'Permiso de ubicación denegado. Puedes mover el pin en el mapa manualmente.';
-              break;
-            case error.POSITION_UNAVAILABLE:
-              mensajeError = 'Señal de ubicación no disponible en este momento.';
-              break;
-            case error.TIMEOUT:
-              mensajeError = 'Tiempo de espera agotado al consultar el GPS.';
-              break;
-          }
-          if (esManual) {
-            mostrarAviso(mensajeError);
-          } else {
-            console.info('Aviso GPS reglamentario:', mensajeError);
-          }
+        (errorAlta) => {
+          console.warn('GPS alta precisión no disponible, usando geolocalización de red/WiFi...', errorAlta);
+          // Intento 2: Precisión estándar por red / WiFi (rápido y compatible con todos los navegadores)
+          navigator.geolocation.getCurrentPosition(
+            (posicion2) => {
+              fijarCoords(posicion2.coords.latitude, posicion2.coords.longitude, posicion2.coords.accuracy);
+            },
+            (errorBaja) => {
+              if (avisoPermiso) avisoPermiso.style.display = 'none';
+              let mensajeError = 'No se pudo obtener el GPS automático. Puedes tocar o mover el pin en el mapa.';
+              if (errorBaja.code === errorBaja.PERMISSION_DENIED) {
+                mensajeError = 'Permiso de ubicación no concedido en el navegador. Toca el mapa para fijar tu ubicación.';
+              }
+              if (esManual) mostrarAviso(mensajeError);
+            },
+            { enableHighAccuracy: false, timeout: 15000, maximumAge: 300000 }
+          );
         },
-        opcionesGPS
+        { enableHighAccuracy: true, timeout: 7000, maximumAge: 60000 }
       );
     }
 
@@ -2453,17 +2476,8 @@
       }
 
       // Posición del reciclador (Parque Principal Municipio o GPS Real del dispositivo)
-      let baseLat = 7.6669;
-      let baseLon = -76.6811;
-
-      if ('geolocation' in navigator) {
-        navigator.geolocation.getCurrentPosition((pos) => {
-          baseLat = pos.coords.latitude;
-          baseLon = pos.coords.longitude;
-          marcadorReciclador.setLatLng([baseLat, baseLon]);
-          marcadorReciclador.bindPopup('<b>Mi ubicación GPS en vivo</b><br>Reciclador en servicio');
-        }, () => { }, { enableHighAccuracy: true, timeout: 5000 });
-      }
+      let baseLat = 7.666925;
+      let baseLon = -76.681140;
 
       const marcadorReciclador = L.circleMarker([baseLat, baseLon], {
         radius: 8,
@@ -2473,6 +2487,27 @@
       }).addTo(mapaInstancia);
       marcadorReciclador.bindPopup('<b>Mi punto de inicio</b><br>Centro del municipio');
       marcadoresMapa.push(marcadorReciclador);
+
+      if ('geolocation' in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            baseLat = pos.coords.latitude;
+            baseLon = pos.coords.longitude;
+            marcadorReciclador.setLatLng([baseLat, baseLon]);
+            marcadorReciclador.bindPopup('<b>Mi ubicación GPS en vivo</b><br>Reciclador en servicio');
+          },
+          () => {
+            navigator.geolocation.getCurrentPosition(
+              (pos2) => {
+                marcadorReciclador.setLatLng([pos2.coords.latitude, pos2.coords.longitude]);
+              },
+              () => {},
+              { enableHighAccuracy: false, timeout: 10000 }
+            );
+          },
+          { enableHighAccuracy: true, timeout: 6000 }
+        );
+      }
 
       const coordenadasRuta = [[baseLat, baseLon]];
 
@@ -2652,15 +2687,18 @@
       // Respaldo de seguridad absoluto: la pantalla de carga nunca se quedará congelada
       setTimeout(() => {
         clearInterval(intervalo);
-        pantalla.classList.add('oculta');
-        setTimeout(() => {
-          pantalla.style.display = 'none';
-        }, 500);
-      }, 2500);
+        if (pantalla) {
+          pantalla.classList.add('oculta');
+          setTimeout(() => {
+            pantalla.style.display = 'none';
+          }, 400);
+        }
+      }, 1800);
     }
 
-    // Inicio automático del canal en vivo y pantalla de carga al abrir la aplicación
-    window.addEventListener('DOMContentLoaded', () => {
+    // Inicio garantizado de la aplicación: se ejecuta inmediatamente si el DOM ya está listo,
+    // o al emitirse DOMContentLoaded, evitando que la pantalla de carga quede bloqueada.
+    function iniciarEcoConectaWeb() {
       try {
         restaurarSesionGuardada();
       } catch (e) {
@@ -2673,14 +2711,23 @@
         console.warn('Error iniciando socket:', e);
       }
 
-      // Si existe una sesión activa y token válido, se cargan los datos autenticados
-      if (tokenJwtActivo && validarTokenJwtLocal(tokenJwtActivo)) {
-        sincronizarDesdeBaseDatosReal();
-        cargarRecicladoresDesdeBD();
+      try {
+        if (tokenJwtActivo && validarTokenJwtLocal(tokenJwtActivo)) {
+          sincronizarDesdeBaseDatosReal();
+          cargarRecicladoresDesdeBD();
+        }
+      } catch (e) {
+        console.warn('Error sincronizando al inicio:', e);
       }
 
       ejecutarCargaInicial();
-    });
+    }
+
+    if (document.readyState === 'loading') {
+      window.addEventListener('DOMContentLoaded', iniciarEcoConectaWeb);
+    } else {
+      iniciarEcoConectaWeb();
+    }
   </script>
 </body>
 
