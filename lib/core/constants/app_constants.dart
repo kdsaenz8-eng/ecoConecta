@@ -14,9 +14,9 @@ class AppConstants {
 
   /// Determina dinámicamente la URL del Backend según la plataforma y el entorno de exportación:
   /// 1. Prioridad: Variable explícita `--dart-define=API_BASE_URL=...`
-  /// 2. En producción / Release (APK o Web): SIEMPRE https://ecoconecta.quantumcore.com.co/api/v1
-  /// 3. En Web: Si el dominio es ecoconecta.quantumcore.com.co o cualquier host remoto, usar HTTPS sin puerto 8080.
-  /// 4. Fallback por defecto: https://ecoconecta.quantumcore.com.co/api/v1 (garantiza funcionamiento en APK y dispositivos físicos reales)
+  /// 2. En producción / Remoto (APK, Web en ecoconecta.softsaenz.com o cualquier host fuera de localhost):
+  ///    SIEMPRE apunta al backend oficial: https://ecoconecta.quantumcore.com.co/api/v1
+  /// 3. En desarrollo local (Web en localhost o 127.0.0.1): apunta a http://localhost:8080/api/v1
   static String get baseUrl {
     const String fromEnv = String.fromEnvironment('API_BASE_URL');
     if (fromEnv.isNotEmpty) return fromEnv;
@@ -27,15 +27,12 @@ class AppConstants {
 
     if (kIsWeb) {
       final String host = Uri.base.host;
-      if (host == 'ecoconecta.quantumcore.com.co' ||
-          (host.isNotEmpty && host != 'localhost' && host != '127.0.0.1')) {
-        final String scheme = Uri.base.scheme.isNotEmpty ? Uri.base.scheme : 'https';
-        final String portSuffix = (Uri.base.port != 80 && Uri.base.port != 443 && Uri.base.port != 0)
-            ? ':${Uri.base.port}'
-            : '';
-        return '$scheme://$host$portSuffix/api/v1';
+      // Solo en entorno local de pruebas apuntar a localhost:8080
+      if (host == 'localhost' || host == '127.0.0.1' || host.startsWith('192.168.')) {
+        return 'http://localhost:8080/api/v1';
       }
-      return 'http://localhost:8080/api/v1';
+      // En cualquier dominio remoto (ej. ecoconecta.softsaenz.com): producción oficial
+      return prodApiUrl;
     }
 
     // Para dispositivos móviles (APK o ejecución física): siempre producción
