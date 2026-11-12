@@ -1457,21 +1457,8 @@
       if (window.API_BASE_URL && typeof window.API_BASE_URL === 'string' && window.API_BASE_URL.length > 0) {
         base = window.API_BASE_URL;
       } else {
-        const hostname = (window.location.hostname && window.location.hostname.length > 0) ? window.location.hostname : 'localhost';
-        const port = window.location.port;
-
-        // Solo si estamos en entorno local de desarrollo (localhost o 127.0.0.1)
-        if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.')) {
-          if (port === '8080' || port === '8000') {
-            base = `${window.location.protocol}//${window.location.host}/api/v1`;
-          } else {
-            base = `http://${hostname}:8080/api/v1`;
-          }
-        } else {
-          // En cualquier dominio remoto o de producción (ej: ecoconecta.softsaenz.com),
-          // la API Backend oficial SIEMPRE reside en: https://ecoconecta.quantumcore.com.co/api/v1
-          base = 'https://ecoconecta.quantumcore.com.co/api/v1';
-        }
+        // SEGÚN .env.production: la API oficial de producción SIEMPRE es:
+        base = 'https://ecoconecta.quantumcore.com.co/api/v1';
       }
 
       const cleanPath = ruta.startsWith('/') ? ruta : `/${ruta}`;
@@ -1645,12 +1632,7 @@
     let socket = null;
 
     function iniciarWebSocket() {
-      // Intentar enlace con el Backend FastAPI en el puerto 8000 si estamos en desarrollo
-      const host = (window.location.port === '8080' || window.location.port === '8000')
-        ? window.location.host
-        : `${window.location.hostname}:8080`;
-      const protocolo = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const url = `${protocolo}//${host}/api/v1/ws`;
+      const url = 'wss://ecoconecta.quantumcore.com.co/api/v1/ws';
 
       try {
         socket = new WebSocket(url);
