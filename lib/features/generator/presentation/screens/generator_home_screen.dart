@@ -668,7 +668,7 @@ class _GeneratorHomeScreenState extends State<GeneratorHomeScreen> {
                                     ClipRRect(
                                       borderRadius: BorderRadius.circular(8),
                                       child: Image.network(
-                                        photo,
+                                        AppConstants.resolvePhotoUrl(photo) ?? photo,
                                         width: 58,
                                         height: 58,
                                         fit: BoxFit.cover,

@@ -74,5 +74,19 @@ void main() {
       expect(metal!.length, lessThanOrEqualTo(500));
       expect(plastico!.length, lessThanOrEqualTo(500));
     });
+
+    test('resolvePhotoUrl convierte rutas relativas del backend en URLs absolutas alcanzables', () {
+      expect(AppConstants.resolvePhotoUrl(null), isNull);
+      expect(AppConstants.resolvePhotoUrl(''), isNull);
+      expect(
+        AppConstants.resolvePhotoUrl('https://images.unsplash.com/photo-123'),
+        'https://images.unsplash.com/photo-123',
+      );
+      expect(
+        AppConstants.resolvePhotoUrl('/api/v1/uploads/evidence_123.jpg'),
+        'https://ecoconecta.quantumcore.com.co/api/v1/uploads/evidence_123.jpg',
+      );
+    });
   });
 }
+

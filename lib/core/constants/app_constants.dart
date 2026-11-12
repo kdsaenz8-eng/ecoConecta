@@ -138,6 +138,18 @@ class AppConstants {
     return 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=600&q=80';
   }
 
+  /// Resuelve la URL pública completa para imágenes guardadas en el servidor backend (/api/v1/uploads/...) o remotas.
+  static String? resolvePhotoUrl(String? rawUrl) {
+    if (rawUrl == null || rawUrl.trim().isEmpty) return null;
+    final String trimmed = rawUrl.trim();
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('data:')) {
+      return trimmed;
+    }
+    final String host = baseUrl.replaceAll(RegExp(r'/api/v1/?$'), '');
+    final String path = trimmed.startsWith('/') ? trimmed : '/$trimmed';
+    return '$host$path';
+  }
+
   // Opciones de volumen estimado idénticas al selector Web
   static const List<String> volumeOptions = <String>[
     '1 o 2 bolsas medianas',

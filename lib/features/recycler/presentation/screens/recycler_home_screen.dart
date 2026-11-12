@@ -532,7 +532,7 @@ class _RecyclerHomeScreenState extends State<RecyclerHomeScreen> {
                                     ClipRRect(
                                       borderRadius: BorderRadius.circular(8),
                                       child: Image.network(
-                                        photo,
+                                        AppConstants.resolvePhotoUrl(photo) ?? photo,
                                         width: 56,
                                         height: 56,
                                         fit: BoxFit.cover,

@@ -1474,6 +1474,14 @@
       return resolved;
     }
 
+    function resolverUrlFoto(url) {
+      if (!url) return '';
+      if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) {
+        return url;
+      }
+      return getApiEndpoint(url);
+    }
+
     function normalizarCategoriasParaAPI(cats) {
       if (!Array.isArray(cats)) return ['PLASTICO'];
       const map = {
@@ -2196,21 +2204,17 @@
 
       if (!verificarRutaProtegida('GENERADOR')) return;
 
-      // Sanear photo_url para respetar el límite estricto de 500 caracteres del backend (VARCHAR(500))
-      let fotoFinal = null;
-      if (fotoActualSubida && typeof fotoActualSubida === 'string' && (fotoActualSubida.startsWith('http://') || fotoActualSubida.startsWith('https://')) && fotoActualSubida.length <= 500) {
-        fotoFinal = fotoActualSubida;
-      } else {
-        // Para imágenes Data URI en base64 de archivo local o cuando no haya URL externa corta,
-        // asignamos URL representativa de evidencia según la categoría (<= 500 caracteres)
+      // Si el usuario adjuntó una foto real (Base64), la enviamos al backend para que la guarde en disco (/api/v1/uploads/...)
+      let fotoAEnviar = fotoActualSubida;
+      if (!fotoAEnviar) {
         if (materialesElegidos.some(m => m.includes('Vidrio') || m === 'VIDRIO')) {
-          fotoFinal = 'https://images.unsplash.com/photo-1596704017254-9b121068fb31?auto=format&fit=crop&w=600&q=80';
+          fotoAEnviar = 'https://images.unsplash.com/photo-1596704017254-9b121068fb31?auto=format&fit=crop&w=600&q=80';
         } else if (materialesElegidos.some(m => m.includes('Cartón') || m.includes('Papel') || m === 'CARTON')) {
-          fotoFinal = 'https://images.unsplash.com/photo-1605600659908-0ef719419d41?auto=format&fit=crop&w=600&q=80';
+          fotoAEnviar = 'https://images.unsplash.com/photo-1605600659908-0ef719419d41?auto=format&fit=crop&w=600&q=80';
         } else if (materialesElegidos.some(m => m.includes('Metal') || m.includes('Lata') || m === 'METAL')) {
-          fotoFinal = 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=600&q=80';
+          fotoAEnviar = 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=600&q=80';
         } else {
-          fotoFinal = 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=600&q=80';
+          fotoAEnviar = 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=600&q=80';
         }
       }
 
@@ -2230,7 +2234,7 @@
             address_text: direccionTexto,
             latitude: latExacta,
             longitude: lonExacta,
-            photo_url: fotoFinal,
+            photo_url: fotoAEnviar,
             notes: 'Coordenadas exactas fijadas por usuario en mapa'
           })
         });
@@ -2255,7 +2259,8 @@
 
     function renderizarHistorialGenerador() {
       const contenedor = document.getElementById('lista-historial-generador');
-      const misEntregas = solicitudes.filter(s => s.generador_nombre === usuarioActivo.nombre || s.barrio === usuarioActivo.barrio);
+      // REGLA: Cada generador solo visualiza sus propias solicitudes registradas
+      const misEntregas = solicitudes.filter(s => s.generador_id === usuarioActivo.id || s.generador_nombre === usuarioActivo.nombre);
 
       if (misEntregas.length === 0) {
         contenedor.innerHTML = '<p style="color: var(--texto-suave); font-size: 0.9rem;">Aún no tienes solicitudes de reciclaje registradas.</p>';
@@ -2266,7 +2271,7 @@
         <div class="tarjeta-solicitud">
           <div style="display: flex; gap: 16px; align-items: flex-start;">
             ${s.foto_url ? `
-              <img src="${s.foto_url}" alt="Foto de residuos" style="width: 100px; height: 90px; object-fit: cover; border-radius: 8px; border: 1px solid var(--borde); flex-shrink: 0;" onerror="this.style.display='none'">
+              <img src="${resolverUrlFoto(s.foto_url)}" alt="Foto de residuos" style="width: 100px; height: 90px; object-fit: cover; border-radius: 8px; border: 1px solid var(--borde); flex-shrink: 0;" onerror="this.style.display='none'">
             ` : ''}
             <div style="flex: 1;">
               <div class="tarjeta-solicitud-encabezado" style="margin-bottom: 6px;">
@@ -2307,7 +2312,7 @@
           <div class="tarjeta-solicitud" style="border-left: 4px solid var(--verde-bosque);">
             <div style="display: flex; gap: 16px; align-items: flex-start; margin-bottom: 10px;">
               ${s.foto_url ? `
-                <img src="${s.foto_url}" alt="Foto real de residuos" style="width: 110px; height: 95px; object-fit: cover; border-radius: 8px; border: 1px solid var(--borde); flex-shrink: 0;" onerror="this.style.display='none'">
+                <img src="${resolverUrlFoto(s.foto_url)}" alt="Foto real de residuos" style="width: 110px; height: 95px; object-fit: cover; border-radius: 8px; border: 1px solid var(--borde); flex-shrink: 0;" onerror="this.style.display='none'">
               ` : ''}
               <div style="flex: 1;">
                 <div class="tarjeta-solicitud-encabezado" style="margin-bottom: 4px;">
@@ -2469,8 +2474,13 @@
           tabla.innerHTML = solicitudes.map(s => `
         <tr>
           <td>
-            <strong>${s.generador_nombre}</strong>
-            <div style="font-size: 0.8rem; color: var(--texto-suave);">${s.direccion}</div>
+            <div style="display: flex; gap: 10px; align-items: center;">
+              ${s.foto_url ? `<img src="${resolverUrlFoto(s.foto_url)}" alt="Evidencia" style="width: 44px; height: 44px; object-fit: cover; border-radius: 6px; border: 1px solid var(--borde);" onerror="this.style.display='none'">` : ''}
+              <div>
+                <strong>${s.generador_nombre}</strong>
+                <div style="font-size: 0.8rem; color: var(--texto-suave);">${s.direccion}</div>
+              </div>
+            </div>
           </td>
           <td>${s.materiales.join(', ')}</td>
           <td>${s.volumen}</td>
