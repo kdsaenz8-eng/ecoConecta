@@ -71,9 +71,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       try {
         final recResp = await _dioClient.dio.get<List<dynamic>>('/users/recyclers');
         if (recResp.data != null && recResp.data is List) {
+          final List<Map<String, dynamic>> parsedRec = <Map<String, dynamic>>[];
+          for (final dynamic item in recResp.data!) {
+            if (item is Map) {
+              parsedRec.add(item.map((dynamic k, dynamic v) => MapEntry(k.toString(), v)));
+            }
+          }
           setState(() {
-            _recicladores = recResp.data!.cast<Map<String, dynamic>>();
-            _conteoRecicladores = _recicladores.length;
+            _recicladores = parsedRec;
+            _conteoRecicladores = parsedRec.length;
           });
         }
       } catch (_) {}
@@ -89,8 +95,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           pickupsData = res.data;
         }
         if (pickupsData != null && pickupsData is List) {
+          final List<Map<String, dynamic>> parsedPickups = <Map<String, dynamic>>[];
+          for (final dynamic item in pickupsData) {
+            if (item is Map) {
+              parsedPickups.add(item.map((dynamic k, dynamic v) => MapEntry(k.toString(), v)));
+            }
+          }
           setState(() {
-            _solicitudes = pickupsData.cast<Map<String, dynamic>>();
+            _solicitudes = parsedPickups;
           });
         } else {
           setState(() {
@@ -367,8 +379,23 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                             : AppConstants.formatCategoryFromApi(cats.toString());
                         final String vol = s['estimated_volume']?.toString() ?? '1 bolsa';
                         final String status = s['status']?.toString() ?? 'Pendiente';
-                        final String recName = s['recycler_name']?.toString() ?? 'Pendiente de asignar';
                         final String? currentRecId = s['recycler_id']?.toString();
+
+                        String recName = s['recycler_name']?.toString() ?? '';
+                        if (recName.isEmpty || recName == 'Pendiente de asignar' || recName == 'null') {
+                          if (currentRecId != null && currentRecId.isNotEmpty) {
+                            final matchedRec = _recicladores.firstWhere(
+                              (r) => r['id']?.toString().toLowerCase() == currentRecId.toLowerCase(),
+                              orElse: () => <String, dynamic>{},
+                            );
+                            if (matchedRec.isNotEmpty) {
+                              recName = (matchedRec['full_name'] ?? matchedRec['nombre'] ?? matchedRec['name'] ?? '').toString();
+                            }
+                          }
+                        }
+                        if (recName.isEmpty) {
+                          recName = 'Pendiente de asignar';
+                        }
 
                         return Container(
                           margin: const EdgeInsets.only(bottom: 12),
@@ -452,8 +479,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                       child: DropdownButtonHideUnderline(
                                         child: DropdownButton<String>(
                                           isExpanded: true,
-                                          value: _recicladores.any((r) => r['id'].toString() == currentRecId)
-                                              ? currentRecId
+                                          value: _recicladores.any((r) => r['id'].toString().toLowerCase() == (currentRecId?.toLowerCase() ?? ''))
+                                              ? _recicladores.firstWhere((r) => r['id'].toString().toLowerCase() == currentRecId!.toLowerCase())['id'].toString()
                                               : null,
                                           hint: const Text(
                                             'Seleccionar reciclador...',
@@ -462,11 +489,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                           items: _recicladores.map((r) {
                                             final String rId = r['id'].toString();
                                             final String rName =
-                                                r['full_name'] ?? r['nombre'] ?? 'Reciclador';
+                                                (r['full_name'] ?? r['nombre'] ?? r['name'] ?? 'Reciclador').toString();
+                                            final String sector = (r['sector'] ?? (r['neighborhood'] != null ? 'Barrio ${r['neighborhood']}' : '')).toString();
+                                            final String label = sector.isNotEmpty ? '$rName ($sector)' : rName;
                                             return DropdownMenuItem<String>(
                                               value: rId,
                                               child: Text(
-                                                rName,
+                                                label,
                                                 style: const TextStyle(fontSize: 12),
                                               ),
                                             );
@@ -474,11 +503,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                           onChanged: (String? selectedRecId) {
                                             if (selectedRecId != null) {
                                               final selectedRec = _recicladores.firstWhere(
-                                                (r) => r['id'].toString() == selectedRecId,
+                                                (r) => r['id'].toString().toLowerCase() == selectedRecId.toLowerCase(),
+                                                orElse: () => <String, dynamic>{},
                                               );
-                                              final String rName = selectedRec['full_name'] ??
+                                              final String rName = (selectedRec['full_name'] ??
                                                   selectedRec['nombre'] ??
-                                                  'Reciclador';
+                                                  selectedRec['name'] ??
+                                                  'Reciclador').toString();
                                               _asignarReciclador(pId, selectedRecId, rName);
                                             }
                                           },

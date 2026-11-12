@@ -75,17 +75,23 @@ class _RecyclerHomeScreenState extends State<RecyclerHomeScreen> {
     try {
       dynamic responseData;
       try {
-        final res = await _dioClient.dio.get<List<dynamic>>('/pickups/pending');
+        final res = await _dioClient.dio.get<List<dynamic>>('/pickups');
         responseData = res.data;
       } catch (_) {
-        final res = await _dioClient.dio.get<List<dynamic>>('/pickups');
+        final res = await _dioClient.dio.get<List<dynamic>>('/pickups/pending');
         responseData = res.data;
       }
 
       if (mounted) {
         if (responseData != null && responseData is List) {
+          final List<Map<String, dynamic>> parsedPickups = <Map<String, dynamic>>[];
+          for (final dynamic item in responseData) {
+            if (item is Map) {
+              parsedPickups.add(item.map((dynamic key, dynamic value) => MapEntry(key.toString(), value)));
+            }
+          }
           setState(() {
-            _pickups = responseData.cast<Map<String, dynamic>>();
+            _pickups = parsedPickups;
           });
         } else {
           setState(() {

@@ -2542,7 +2542,14 @@
           <td>${s.volumen}</td>
           <td><span class="placa-estado ${s.estado}">${formatearEstado(s.estado)}</span></td>
           <td>
-            <strong>${s.reciclador_nombre || 'Pendiente de asignar'}</strong>
+            <strong>${(() => {
+              if (s.reciclador_nombre && s.reciclador_nombre !== 'Pendiente de asignar') return s.reciclador_nombre;
+              if (s.reciclador_id) {
+                const rMatch = listaRecicladores.find(r => String(r.id).toLowerCase() === String(s.reciclador_id).toLowerCase());
+                if (rMatch) return rMatch.nombre || rMatch.full_name || rMatch.name;
+              }
+              return 'Pendiente de asignar';
+            })()}</strong>
           </td>
           <td>
               <select onchange="asignarRecicladorDesdeAdmin('${s.id}', this.value)" style="padding: 6px 10px; font-size: 0.85rem; font-weight: 500; border-radius: 6px; border: 1px solid var(--borde); background: var(--fondo-tarjeta); color: var(--texto); cursor: pointer;">
@@ -2551,7 +2558,7 @@
         const nombre = r.nombre || r.full_name || r.name || 'Reciclador de Oficio';
         const sector = r.sector || (r.neighborhood ? `Barrio ${r.neighborhood}` : '');
         const etiqueta = sector ? `${nombre} — ${sector}` : nombre;
-        const seleccionado = (s.reciclador_id && String(s.reciclador_id) === String(r.id)) ? 'selected' : '';
+        const seleccionado = (s.reciclador_id && String(s.reciclador_id).toLowerCase() === String(r.id).toLowerCase()) ? 'selected' : '';
         return `
                     <option value="${r.id}" ${seleccionado}>
                       ${etiqueta}

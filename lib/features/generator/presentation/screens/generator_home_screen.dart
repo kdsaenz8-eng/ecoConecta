@@ -141,8 +141,14 @@ class _GeneratorHomeScreenState extends State<GeneratorHomeScreen> {
 
       if (mounted) {
         if (responseData != null && responseData is List) {
+          final List<Map<String, dynamic>> parsedHistory = <Map<String, dynamic>>[];
+          for (final dynamic item in responseData) {
+            if (item is Map) {
+              parsedHistory.add(item.map((dynamic key, dynamic value) => MapEntry(key.toString(), value)));
+            }
+          }
           setState(() {
-            _history = responseData.cast<Map<String, dynamic>>();
+            _history = parsedHistory;
           });
         } else {
           setState(() {
