@@ -98,32 +98,45 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     setState(() => _isLoading = true);
     try {
       // 1. Cargar métricas
-      final metricsResp = await _dioClient.dio.get<Map<String, dynamic>>('/metrics/pgirs-summary');
-      if (metricsResp.data != null) {
-        final roles = metricsResp.data!['users_by_role'] as Map<String, dynamic>?;
-        if (roles != null) {
-          setState(() {
-            _conteoGeneradores = (roles['GENERADOR'] as num?)?.toInt() ?? 14;
-            _conteoRecicladores = (roles['RECICLADOR'] as num?)?.toInt() ?? 3;
-          });
+      try {
+        final metricsResp = await _dioClient.dio.get<Map<String, dynamic>>('/metrics/pgirs-summary');
+        if (metricsResp.data != null) {
+          final roles = metricsResp.data!['users_by_role'] as Map<String, dynamic>?;
+          if (roles != null) {
+            setState(() {
+              _conteoGeneradores = (roles['GENERADOR'] as num?)?.toInt() ?? 14;
+              _conteoRecicladores = (roles['RECICLADOR'] as num?)?.toInt() ?? 3;
+            });
+          }
         }
-      }
+      } catch (_) {}
 
       // 2. Cargar recicladores
-      final recsResp = await _dioClient.dio.get<List<dynamic>>('/users/recyclers');
-      if (recsResp.data != null && recsResp.data!.isNotEmpty) {
-        setState(() {
-          _recicladores = recsResp.data!.cast<Map<String, dynamic>>();
-        });
-      }
+      try {
+        final recsResp = await _dioClient.dio.get<List<dynamic>>('/users/recyclers');
+        if (recsResp.data != null && recsResp.data!.isNotEmpty) {
+          setState(() {
+            _recicladores = recsResp.data!.cast<Map<String, dynamic>>();
+          });
+        }
+      } catch (_) {}
 
       // 3. Cargar solicitudes
-      final pickupsResp = await _dioClient.dio.get<List<dynamic>>('/pickups');
-      if (pickupsResp.data != null && pickupsResp.data!.isNotEmpty) {
-        setState(() {
-          _solicitudes = pickupsResp.data!.cast<Map<String, dynamic>>();
-        });
-      }
+      try {
+        dynamic pickupsData;
+        try {
+          final res = await _dioClient.dio.get<List<dynamic>>('/pickups');
+          pickupsData = res.data;
+        } catch (_) {
+          final res = await _dioClient.dio.get<List<dynamic>>('/pickups/pending');
+          pickupsData = res.data;
+        }
+        if (pickupsData != null && pickupsData is List && pickupsData.isNotEmpty) {
+          setState(() {
+            _solicitudes = pickupsData.cast<Map<String, dynamic>>();
+          });
+        }
+      } catch (_) {}
 
       // 4. Cargar auditoría
       final auditResp = await _dioClient.dio.get<List<dynamic>>('/audit/logs');

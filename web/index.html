@@ -1527,8 +1527,11 @@
     ];
 
     async function cargarRecicladoresDesdeBD() {
-      // Ruta protegida con JWT Bearer
+      // Ruta protegida con JWT Bearer: únicamente relevante para despacho del rol ADMINISTRADOR
       if (!tokenJwtActivo || !validarTokenJwtLocal(tokenJwtActivo)) {
+        return;
+      }
+      if (!usuarioActivo || usuarioActivo.rol !== 'ADMINISTRADOR') {
         return;
       }
       try {
@@ -1551,13 +1554,11 @@
             if (conteoEl) {
               conteoEl.innerText = String(listaRecicladores.length);
             }
-            if (usuarioActivo && usuarioActivo.rol === 'ADMINISTRADOR') {
-              renderizarPortalAdmin();
-            }
+            renderizarPortalAdmin();
           }
         }
-      } catch (err) {
-        console.warn('[AUTH RECYCLERS] Consulta segura de recicladores cancelada:', err);
+      } catch (_) {
+        // En caso de que el backend esté en proceso de despliegue, preserva los recicladores del municipio
       }
     }
 
@@ -2069,7 +2070,9 @@
 
       // Sincronizar datos reales del backend usando la sesión JWT activa
       sincronizarDesdeBaseDatosReal();
-      cargarRecicladoresDesdeBD();
+      if (usuarioActivo.rol === 'ADMINISTRADOR') {
+        cargarRecicladoresDesdeBD();
+      }
 
       if (usuarioActivo.rol === 'GENERADOR') {
         renderizarHistorialGenerador();
@@ -2696,7 +2699,9 @@
       try {
         if (tokenJwtActivo && validarTokenJwtLocal(tokenJwtActivo)) {
           sincronizarDesdeBaseDatosReal();
-          cargarRecicladoresDesdeBD();
+          if (usuarioActivo && usuarioActivo.rol === 'ADMINISTRADOR') {
+            cargarRecicladoresDesdeBD();
+          }
         }
       } catch (e) {
         console.warn('Error sincronizando al inicio:', e);
