@@ -1474,6 +1474,37 @@
       return resolved;
     }
 
+    function normalizarCategoriasParaAPI(cats) {
+      if (!Array.isArray(cats)) return ['PLASTICO'];
+      const map = {
+        'Plástico y Botellas': 'PLASTICO',
+        'Papel y Cartón Limpio': 'CARTON',
+        'Cartón y Papel': 'CARTON',
+        'Vidrio y Envases': 'VIDRIO',
+        'Latas y Metales': 'METAL'
+      };
+      return cats.map(c => {
+        if (map[c]) return map[c];
+        const s = String(c).toUpperCase();
+        if (s.includes('PLAST')) return 'PLASTICO';
+        if (s.includes('CART') || s.includes('PAPEL')) return 'CARTON';
+        if (s.includes('VIDR')) return 'VIDRIO';
+        if (s.includes('MET') || s.includes('LATA')) return 'METAL';
+        return 'PLASTICO';
+      });
+    }
+
+    function desnormalizarCategorias(cats) {
+      if (!Array.isArray(cats)) return ['Plástico y Botellas'];
+      const map = {
+        'PLASTICO': 'Plástico y Botellas',
+        'CARTON': 'Papel y Cartón Limpio',
+        'VIDRIO': 'Vidrio y Envases',
+        'METAL': 'Latas y Metales'
+      };
+      return cats.map(c => map[c] || c);
+    }
+
     async function sincronizarDesdeBaseDatosReal() {
       // Las rutas de datos requieren obligatoriamente token JWT Bearer autenticado
       if (!tokenJwtActivo || !validarTokenJwtLocal(tokenJwtActivo)) {
@@ -1502,7 +1533,7 @@
               generador_telefono: p.generator_phone || p.phone || '',
               barrio: p.neighborhood || p.generator_neighborhood || 'Sector Urbano',
               direccion: p.address_text || 'Coordenadas GPS fijadas en mapa',
-              materiales: p.waste_categories || ['Plástico y Botellas'],
+              materiales: desnormalizarCategorias(p.waste_categories),
               volumen: p.estimated_volume,
               estado: (p.status === 'PENDIENTE' || p.status === 'Pendiente') ? 'Pendiente' : (p.status === 'ACEPTADA' ? 'Aceptada' : (p.status === 'EN_CAMINO' ? 'En_Ruta' : (p.status === 'COMPLETADA' ? 'Completada' : p.status))),
               lat: parseFloat(p.latitude) || 7.666925,
@@ -2187,7 +2218,7 @@
           method: 'POST',
           body: JSON.stringify({
             generator_id: usuarioActivo.id,
-            waste_categories: [...materialesElegidos],
+            waste_categories: normalizarCategoriasParaAPI(materialesElegidos),
             estimated_volume: volumenTexto,
             address_text: direccionTexto,
             latitude: latExacta,

@@ -5,6 +5,7 @@
 library;
 
 import 'package:flutter/material.dart';
+import '../../../../core/constants/app_constants.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/widgets/institutional_header.dart';
 
@@ -344,7 +345,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         final String genName = s['generator_name']?.toString() ?? 'Ciudadano';
                         final String address = s['address_text']?.toString() ?? 'Municipio';
                         final dynamic cats = s['waste_categories'];
-                        final String catsStr = cats is List ? cats.join(', ') : cats.toString();
+                        final String catsStr = cats is List
+                            ? cats.map((dynamic c) => AppConstants.formatCategoryFromApi(c.toString())).join(', ')
+                            : AppConstants.formatCategoryFromApi(cats.toString());
                         final String vol = s['estimated_volume']?.toString() ?? '1 bolsa';
                         final String status = s['status']?.toString() ?? 'Pendiente';
                         final String recName = s['recycler_name']?.toString() ?? 'Pendiente de asignar';

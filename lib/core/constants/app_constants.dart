@@ -64,6 +64,46 @@ class AppConstants {
     },
   ];
 
+  /// Mapeo bidireccional entre etiquetas de interfaz y Enums de la API Backend
+  /// Backend Enum esperado: 'PLASTICO', 'CARTON', 'VIDRIO', 'METAL'
+  static const Map<String, String> categoryToApiEnum = <String, String>{
+    'Plástico y Botellas': 'PLASTICO',
+    'Papel y Cartón Limpio': 'CARTON',
+    'Cartón y Papel': 'CARTON',
+    'Vidrio y Envases': 'VIDRIO',
+    'Latas y Metales': 'METAL',
+  };
+
+  static const Map<String, String> apiEnumToCategory = <String, String>{
+    'PLASTICO': 'Plástico y Botellas',
+    'CARTON': 'Papel y Cartón Limpio',
+    'VIDRIO': 'Vidrio y Envases',
+    'METAL': 'Latas y Metales',
+  };
+
+  static String normalizeCategoryToApi(String category) {
+    if (categoryToApiEnum.containsKey(category)) {
+      return categoryToApiEnum[category]!;
+    }
+    final String upper = category.toUpperCase();
+    if (upper.contains('PLAST')) return 'PLASTICO';
+    if (upper.contains('CART') || upper.contains('PAPEL')) return 'CARTON';
+    if (upper.contains('VIDR')) return 'VIDRIO';
+    if (upper.contains('MET') || upper.contains('LATA')) return 'METAL';
+    return 'PLASTICO';
+  }
+
+  static String formatCategoryFromApi(String rawCategory) {
+    if (apiEnumToCategory.containsKey(rawCategory)) {
+      return apiEnumToCategory[rawCategory]!;
+    }
+    final String upper = rawCategory.toUpperCase();
+    if (apiEnumToCategory.containsKey(upper)) {
+      return apiEnumToCategory[upper]!;
+    }
+    return rawCategory;
+  }
+
   // Opciones de volumen estimado idénticas al selector Web
   static const List<String> volumeOptions = <String>[
     '1 o 2 bolsas medianas',

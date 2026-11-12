@@ -182,7 +182,7 @@ class _GeneratorHomeScreenState extends State<GeneratorHomeScreen> {
       await _dioClient.dio.post<dynamic>(
         '/pickups',
         data: <String, dynamic>{
-          'waste_categories': _selectedMaterials.toList(),
+          'waste_categories': _selectedMaterials.map(AppConstants.normalizeCategoryToApi).toList(),
           'estimated_volume': _selectedVolume,
           'latitude': _currentLat,
           'longitude': _currentLon,
@@ -625,7 +625,9 @@ class _GeneratorHomeScreenState extends State<GeneratorHomeScreen> {
                       else
                         ..._history.map((Map<String, dynamic> item) {
                         final dynamic cats = item['waste_categories'];
-                        final String catsStr = cats is List ? cats.join(', ') : cats.toString();
+                        final String catsStr = cats is List
+                            ? cats.map((dynamic c) => AppConstants.formatCategoryFromApi(c.toString())).join(', ')
+                            : AppConstants.formatCategoryFromApi(cats.toString());
                         final String status = item['status']?.toString() ?? 'Pendiente';
                         final String recycler =
                             item['recycler_name']?.toString() ?? 'Pendiente de asignar';

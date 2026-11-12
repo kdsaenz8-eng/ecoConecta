@@ -491,7 +491,9 @@ class _RecyclerHomeScreenState extends State<RecyclerHomeScreen> {
                         final String neighborhood =
                             p['neighborhood']?.toString() ?? 'Centro';
                         final dynamic cats = p['waste_categories'];
-                        final String catsStr = cats is List ? cats.join(', ') : cats.toString();
+                        final String catsStr = cats is List
+                            ? cats.map((dynamic c) => AppConstants.formatCategoryFromApi(c.toString())).join(', ')
+                            : AppConstants.formatCategoryFromApi(cats.toString());
                         final String vol = p['estimated_volume']?.toString() ?? '1 bolsa';
                         final String? photo = p['photo_url'] as String?;
                         final String address = p['address_text']?.toString() ?? 'Barrio $neighborhood';
