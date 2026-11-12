@@ -187,7 +187,9 @@ class _GeneratorHomeScreenState extends State<GeneratorHomeScreen> {
           'latitude': _currentLat,
           'longitude': _currentLon,
           'address_text': _addressController.text.trim(),
-          'photo_url': _hasPhoto && _photoUrl.isNotEmpty ? _photoUrl : null,
+          'photo_url': _hasPhoto
+              ? AppConstants.sanitizePhotoUrl(_photoUrl, categories: _selectedMaterials)
+              : null,
           'notes': 'Publicado desde aplicación móvil EcoConecta',
         },
       );

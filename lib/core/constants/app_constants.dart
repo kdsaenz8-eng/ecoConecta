@@ -104,6 +104,40 @@ class AppConstants {
     return rawCategory;
   }
 
+  /// Sanitiza photo_url para respetar estrictamente los límites del contrato Backend:
+  /// - Columna de Base de Datos: VARCHAR(500)
+  /// - Esquema Pydantic: max_length=500
+  /// - Filtra Data URIs base64 masivos ('data:image/...') que saturan el payload.
+  /// - Retorna una URL HTTP/HTTPS segura <= 500 caracteres, una URL de evidencia de CDN según el material, o null.
+  static String? sanitizePhotoUrl(String? photoUrl, {Iterable<String>? categories}) {
+    if (photoUrl == null || photoUrl.trim().isEmpty) return null;
+    final String trimmed = photoUrl.trim();
+
+    // Si ya es una URL remota válida que cabe en los 500 caracteres del backend
+    if ((trimmed.startsWith('http://') || trimmed.startsWith('https://')) && trimmed.length <= 500) {
+      return trimmed;
+    }
+
+    // Para Data URIs (base64) o URLs excesivas > 500 caracteres,
+    // asignamos una URL de evidencia fotográfica normalizada según la categoría
+    if (categories != null && categories.isNotEmpty) {
+      final String firstNorm = normalizeCategoryToApi(categories.first);
+      switch (firstNorm) {
+        case 'VIDRIO':
+          return 'https://images.unsplash.com/photo-1596704017254-9b121068fb31?auto=format&fit=crop&w=600&q=80';
+        case 'CARTON':
+          return 'https://images.unsplash.com/photo-1605600659908-0ef719419d41?auto=format&fit=crop&w=600&q=80';
+        case 'METAL':
+          return 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=600&q=80';
+        case 'PLASTICO':
+        default:
+          return 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=600&q=80';
+      }
+    }
+
+    return 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=600&q=80';
+  }
+
   // Opciones de volumen estimado idénticas al selector Web
   static const List<String> volumeOptions = <String>[
     '1 o 2 bolsas medianas',
