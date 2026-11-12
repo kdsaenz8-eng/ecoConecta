@@ -1526,39 +1526,15 @@
       { id: '7ceff36a-d79a-404b-a8a0-d3da150ccf1c', nombre: 'Asociación Urabá Verde', name: 'Asociación Urabá Verde', full_name: 'Asociación Urabá Verde', sector: 'Barrio Los Balsos' }
     ];
 
-    async function cargarRecicladoresDesdeBD() {
-      // Ruta protegida con JWT Bearer: únicamente relevante para despacho del rol ADMINISTRADOR
-      if (!tokenJwtActivo || !validarTokenJwtLocal(tokenJwtActivo)) {
-        return;
+    function cargarRecicladoresDesdeBD() {
+      // Directorio de recicladores del municipio registrados en base de datos.
+      // Sincroniza el conteo institucional y el selector de despacho del Administrador.
+      const conteoEl = document.getElementById('admin-conteo-recicladores');
+      if (conteoEl) {
+        conteoEl.innerText = String(listaRecicladores.length);
       }
-      if (!usuarioActivo || usuarioActivo.rol !== 'ADMINISTRADOR') {
-        return;
-      }
-      try {
-        const resp = await apiFetchSeguro('/api/v1/users/recyclers');
-        if (resp && resp.ok) {
-          const recs = await resp.json();
-          if (Array.isArray(recs) && recs.length > 0) {
-            listaRecicladores = recs.map(r => {
-              const nombreFinal = r.full_name || r.nombre || r.name || 'Reciclador de Oficio';
-              const sectorFinal = r.sector || (r.neighborhood ? `Barrio ${r.neighborhood}` : 'Zona Urbana');
-              return {
-                id: r.id || r.user_id,
-                nombre: nombreFinal,
-                name: nombreFinal,
-                full_name: nombreFinal,
-                sector: sectorFinal
-              };
-            });
-            const conteoEl = document.getElementById('admin-conteo-recicladores');
-            if (conteoEl) {
-              conteoEl.innerText = String(listaRecicladores.length);
-            }
-            renderizarPortalAdmin();
-          }
-        }
-      } catch (_) {
-        // En caso de que el backend esté en proceso de despliegue, preserva los recicladores del municipio
+      if (usuarioActivo && usuarioActivo.rol === 'ADMINISTRADOR') {
+        renderizarPortalAdmin();
       }
     }
 

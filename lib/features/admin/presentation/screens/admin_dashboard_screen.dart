@@ -111,15 +111,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         }
       } catch (_) {}
 
-      // 2. Cargar recicladores
-      try {
-        final recsResp = await _dioClient.dio.get<List<dynamic>>('/users/recyclers');
-        if (recsResp.data != null && recsResp.data!.isNotEmpty) {
-          setState(() {
-            _recicladores = recsResp.data!.cast<Map<String, dynamic>>();
-          });
-        }
-      } catch (_) {}
+      // 2. Directorio de recicladores del municipio
+      // Mantiene los recicladores oficiales de Chigorodó sin disparar errores 404
+      // mientras se completa el despliegue del endpoint en el contenedor de producción.
 
       // 3. Cargar solicitudes
       try {
