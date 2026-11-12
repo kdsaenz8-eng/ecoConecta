@@ -1519,10 +1519,13 @@
         return;
       }
       try {
-        // En producción FastAPI los endpoints especializados son /pending (reciclador/admin) y /my-requests (generador)
-        let ruta = '/api/v1/pickups/pending';
+        // Enrutamiento según rol: Administrador consulta todo el universo municipal (/pickups),
+        // Generador consulta su historial propio (/my-requests) y Reciclador las pendientes (/pending).
+        let ruta = '/api/v1/pickups';
         if (usuarioActivo && usuarioActivo.rol === 'GENERADOR') {
           ruta = '/api/v1/pickups/my-requests';
+        } else if (usuarioActivo && usuarioActivo.rol === 'RECICLADOR') {
+          ruta = '/api/v1/pickups/pending';
         }
 
         let resp = await apiFetchSeguro(ruta);
@@ -2036,9 +2039,14 @@
       document.getElementById('vista-administrador').style.display = usuarioActivo.rol === 'ADMINISTRADOR' ? 'block' : 'none';
 
       // Sincronizar datos reales del backend usando la sesión JWT activa
-      sincronizarDesdeBaseDatosReal();
       if (usuarioActivo.rol === 'ADMINISTRADOR') {
-        cargarRecicladoresDesdeBD();
+        cargarRecicladoresDesdeBD().then(() => {
+          sincronizarDesdeBaseDatosReal().then(() => {
+            renderizarPortalAdmin();
+          });
+        });
+      } else {
+        sincronizarDesdeBaseDatosReal();
       }
 
       if (usuarioActivo.rol === 'GENERADOR') {
@@ -2503,10 +2511,11 @@
                 <option value="" disabled ${!s.reciclador_id ? 'selected' : ''}>Asignar a un reciclador...</option>
                 ${listaRecicladores.map(r => {
         const nombre = r.nombre || r.full_name || r.name || 'Reciclador de Oficio';
-        const sector = r.sector || '';
+        const sector = r.sector || (r.neighborhood ? `Barrio ${r.neighborhood}` : '');
         const etiqueta = sector ? `${nombre} — ${sector}` : nombre;
+        const seleccionado = (s.reciclador_id && String(s.reciclador_id) === String(r.id)) ? 'selected' : '';
         return `
-                    <option value="${r.id}" ${s.reciclador_id === r.id ? 'selected' : ''}>
+                    <option value="${r.id}" ${seleccionado}>
                       ${etiqueta}
                     </option>
                   `;
@@ -2534,34 +2543,53 @@
     async function asignarRecicladorDesdeAdmin(solicitudId, recicladorId) {
       if (!verificarRutaProtegida('ADMINISTRADOR')) return;
 
-      const rec = listaRecicladores.find(r => r.id === recicladorId);
-      if (!rec) return;
-
-      const nombreAsignado = rec.nombre || rec.full_name || rec.name || 'Reciclador';
-
-      try {
-        await apiFetchSeguro(`/api/v1/pickups/${solicitudId}/assign?recycler_id=${rec.id}`, {
-          method: 'POST',
-          body: JSON.stringify({ recycler_id: rec.id })
-        });
-      } catch (_) { }
-
-      // Actualizar inmediatamente en memoria y vista local
-      const item = solicitudes.find(s => s.id === solicitudId);
-      if (item) {
-        item.reciclador_id = rec.id;
-        item.reciclador_nombre = nombreAsignado;
-        item.estado = 'Aceptada';
+      if (!recicladorId) {
+        mostrarAviso('Por favor selecciona un reciclador del listado.');
+        return;
       }
 
-      emitirCambio('ASIGNACION_RECICLADOR', {
-        solicitudId: solicitudId,
-        recicladorId: rec.id,
-        recicladorNombre: nombreAsignado
-      });
+      const rec = listaRecicladores.find(r => String(r.id) === String(recicladorId));
+      const nombreAsignado = rec ? (rec.nombre || rec.full_name || rec.name || 'Reciclador') : 'Reciclador';
 
-      renderizarPortalAdmin();
-      mostrarAviso(`Solicitud asignada a ${nombreAsignado}`);
+      mostrarAviso(`Asignando solicitud a ${nombreAsignado}...`);
+
+      try {
+        const resp = await apiFetchSeguro(`/api/v1/pickups/${solicitudId}/assign?recycler_id=${recicladorId}`, {
+          method: 'POST',
+          body: JSON.stringify({
+            recycler_id: recicladorId,
+            status: 'Aceptada'
+          })
+        });
+
+        if (!resp || !resp.ok) {
+          const errData = await resp.json().catch(() => ({}));
+          const detalle = errData.detail || `Error HTTP ${resp ? resp.status : 'desconocido'}`;
+          mostrarAviso(`No se pudo asignar el reciclador: ${detalle}`);
+          console.error('[ASSIGN ERROR]', resp ? resp.status : 'No response', errData);
+          return;
+        }
+
+        // Actualizar inmediatamente en memoria y vista local
+        const item = solicitudes.find(s => String(s.id) === String(solicitudId));
+        if (item) {
+          item.reciclador_id = recicladorId;
+          item.reciclador_nombre = nombreAsignado;
+          item.estado = 'Aceptada';
+        }
+
+        emitirCambio('ASIGNACION_RECICLADOR', {
+          solicitudId: solicitudId,
+          recicladorId: recicladorId,
+          recicladorNombre: nombreAsignado
+        });
+
+        renderizarPortalAdmin();
+        mostrarAviso(`Solicitud asignada con éxito a ${nombreAsignado}`);
+      } catch (err) {
+        console.error('[ASSIGN EXCEPTION]', err);
+        mostrarAviso(`Error de comunicación al asignar reciclador: ${err.message || err}`);
+      }
     }
 
     // =========================================================================

@@ -133,29 +133,39 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     try {
       await _dioClient.dio.post<dynamic>(
         '/pickups/$pickupId/assign',
+        queryParameters: <String, dynamic>{'recycler_id': recyclerId},
         data: <String, dynamic>{
           'recycler_id': recyclerId,
           'status': 'Aceptada',
         },
       );
-    } catch (_) {}
 
-    setState(() {
-      final int idx = _solicitudes.indexWhere((p) => p['id'].toString() == pickupId);
-      if (idx != -1) {
-        _solicitudes[idx]['recycler_id'] = recyclerId;
-        _solicitudes[idx]['recycler_name'] = recyclerName;
-        _solicitudes[idx]['status'] = 'Aceptada';
+      setState(() {
+        final int idx = _solicitudes.indexWhere((p) => p['id'].toString() == pickupId);
+        if (idx != -1) {
+          _solicitudes[idx]['recycler_id'] = recyclerId;
+          _solicitudes[idx]['recycler_name'] = recyclerName;
+          _solicitudes[idx]['status'] = 'Aceptada';
+        }
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: const Color(0xFF15803D),
+            content: Text('Ruta asignada con éxito a: $recyclerName'),
+          ),
+        );
       }
-    });
-
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          backgroundColor: const Color(0xFF15803D),
-          content: Text('Ruta asignada con éxito a: $recyclerName'),
-        ),
-      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: const Color(0xFFDC2626),
+            content: Text('Error al asignar reciclador: $e'),
+          ),
+        );
+      }
     }
   }
 
@@ -441,6 +451,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                       child: DropdownButtonHideUnderline(
                                         child: DropdownButton<String>(
                                           isExpanded: true,
+                                          value: _recicladores.any((r) => r['id'].toString() == (p['recycler_id']?.toString() ?? ''))
+                                              ? p['recycler_id']?.toString()
+                                              : null,
                                           hint: const Text(
                                             'Seleccionar reciclador...',
                                             style: TextStyle(fontSize: 12),
