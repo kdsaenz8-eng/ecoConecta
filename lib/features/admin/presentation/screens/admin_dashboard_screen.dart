@@ -21,72 +21,17 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   final DioClient _dioClient = DioClient();
   bool _isLoading = false;
 
-  int _conteoGeneradores = 14;
-  int _conteoRecicladores = 3;
+  int _conteoGeneradores = 0;
+  int _conteoRecicladores = 0;
 
-  // Recicladores reales del municipio
-  List<Map<String, dynamic>> _recicladores = <Map<String, dynamic>>[
-    {
-      'id': 'f2f8aab9-0dba-443a-b326-17de60dbf212',
-      'nombre': 'Carlos Andrés Mena',
-      'sector': 'Barrio El Bosque',
-    },
-    {
-      'id': '7ceff36a-d79a-404b-a8a0-d3da150ccf1c',
-      'nombre': 'Asociación Urabá Verde',
-      'sector': 'Barrio Los Balsos',
-    },
-  ];
+  // Directorio cargado dinámicamente desde la API real
+  List<Map<String, dynamic>> _recicladores = <Map<String, dynamic>>[];
 
-  // Solicitudes del municipio
-  List<Map<String, dynamic>> _solicitudes = <Map<String, dynamic>>[
-    {
-      'id': 'SOL-01',
-      'generator_name': 'María Fernanda Córdoba',
-      'address_text': 'Calle 98 # 102-15, Casa de rejas verdes, Barrio Kennedy',
-      'waste_categories': <String>['Plástico y Botellas', 'Papel y Cartón Limpio'],
-      'estimated_volume': '1 o 2 bolsas medianas',
-      'status': 'Aceptada',
-      'recycler_id': 'f2f8aab9-0dba-443a-b326-17de60dbf212',
-      'recycler_name': 'Carlos Andrés Mena',
-    },
-    {
-      'id': 'SOL-02',
-      'generator_name': 'Supermercado El Ahorro',
-      'address_text': 'Carrera 103 # 94-20, Entrada de cargue, Centro',
-      'waste_categories': <String>['Papel y Cartón Limpio', 'Latas y Metales'],
-      'estimated_volume': 'Varios bultos de negocio',
-      'status': 'En_Ruta',
-      'recycler_id': 'f2f8aab9-0dba-443a-b326-17de60dbf212',
-      'recycler_name': 'Carlos Andrés Mena',
-    },
-    {
-      'id': 'SOL-03',
-      'generator_name': 'Panadería La Sultana',
-      'address_text': 'Calle 95 # 105-12, Los Balsos',
-      'waste_categories': <String>['Vidrio y Envases'],
-      'estimated_volume': '1 bulto o costal',
-      'status': 'Pendiente',
-      'recycler_id': null,
-      'recycler_name': 'Pendiente de asignar',
-    },
-  ];
+  // Solicitudes cargadas desde la API real
+  List<Map<String, dynamic>> _solicitudes = <Map<String, dynamic>>[];
 
-  // Registro de auditoría legal
-  List<Map<String, dynamic>> _auditLogs = <Map<String, dynamic>>[
-    {
-      'fecha': 'Hoy, 2:15 PM',
-      'usuario': 'María Fernanda Córdoba (maria.cordoba@ecoconecta.co)',
-      'detalle': 'Aceptación expresa de la política de datos personales (Ley 1581 de 2012).',
-      'hash': 'SHA256: 7f8a9b2c3d4e5f...',
-    },
-    {
-      'fecha': 'Hoy, 1:40 PM',
-      'usuario': 'Carlos Andrés Mena (carlos.mena@recicladoresuraba.org)',
-      'detalle': 'Registro y verificación de credencial de reciclador de oficio municipal.',
-      'hash': 'SHA256: 1a2b3c4d5e6f7a...',
-    },
-  ];
+  // Registro de auditoría cargado desde la API real
+  List<Map<String, dynamic>> _auditLogs = <Map<String, dynamic>>[];
 
   @override
   void initState() {
@@ -104,8 +49,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           final roles = metricsResp.data!['users_by_role'] as Map<String, dynamic>?;
           if (roles != null) {
             setState(() {
-              _conteoGeneradores = (roles['GENERADOR'] as num?)?.toInt() ?? 14;
-              _conteoRecicladores = (roles['RECICLADOR'] as num?)?.toInt() ?? 3;
+              _conteoGeneradores = (roles['GENERADOR'] as num?)?.toInt() ?? 0;
+              _conteoRecicladores = (roles['RECICLADOR'] as num?)?.toInt() ?? 0;
             });
           }
         }
@@ -125,12 +70,22 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           final res = await _dioClient.dio.get<List<dynamic>>('/pickups/pending');
           pickupsData = res.data;
         }
-        if (pickupsData != null && pickupsData is List && pickupsData.isNotEmpty) {
+        if (pickupsData != null && pickupsData is List) {
           setState(() {
             _solicitudes = pickupsData.cast<Map<String, dynamic>>();
           });
+        } else {
+          setState(() {
+            _solicitudes = <Map<String, dynamic>>[];
+          });
         }
-      } catch (_) {}
+      } catch (_) {
+        if (mounted) {
+          setState(() {
+            _solicitudes = <Map<String, dynamic>>[];
+          });
+        }
+      }
 
       // 4. Cargar auditoría
       final auditResp = await _dioClient.dio.get<List<dynamic>>('/audit/logs');
@@ -360,7 +315,21 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       ),
                       const SizedBox(height: 14),
 
-                      ..._solicitudes.map((Map<String, dynamic> s) {
+                      if (_solicitudes.isEmpty)
+                        Container(
+                          padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 16),
+                          alignment: Alignment.center,
+                          child: const Text(
+                            'No hay solicitudes de recolección en el sistema municipal.',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Color(0xFF64748B),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        )
+                      else
+                        ..._solicitudes.map((Map<String, dynamic> s) {
                         final String pId = s['id'].toString();
                         final String genName = s['generator_name']?.toString() ?? 'Ciudadano';
                         final String address = s['address_text']?.toString() ?? 'Municipio';
@@ -528,36 +497,50 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
-                          children: _auditLogs.map((log) {
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 8),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: <Widget>[
-                                  Row(
-                                    children: <Widget>[
-                                      const Icon(Icons.verified_user, size: 14, color: Color(0xFF15803D)),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        '${log['fecha']} — ${log['usuario']}',
-                                        style: const TextStyle(
-                                          fontSize: 11.5,
-                                          fontWeight: FontWeight.w700,
-                                          color: Color(0xFF1E293B),
-                                        ),
+                          children: _auditLogs.isEmpty
+                              ? <Widget>[
+                                  const Padding(
+                                    padding: EdgeInsets.symmetric(vertical: 8),
+                                    child: Text(
+                                      'No hay registros de auditoría reportados.',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Color(0xFF64748B),
+                                        fontStyle: FontStyle.italic,
                                       ),
-                                    ],
+                                    ),
                                   ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    '${log['detalle']} • ${log['hash']}',
-                                    style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
-                                  ),
-                                  const Divider(height: 12, color: Color(0xFFE2E8F0)),
-                                ],
-                              ),
-                            );
-                          }).toList(),
+                                ]
+                              : _auditLogs.map((log) {
+                                  return Padding(
+                                    padding: const EdgeInsets.only(bottom: 8),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: <Widget>[
+                                        Row(
+                                          children: <Widget>[
+                                            const Icon(Icons.verified_user, size: 14, color: Color(0xFF15803D)),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              '${log['fecha']} — ${log['usuario']}',
+                                              style: const TextStyle(
+                                                fontSize: 11.5,
+                                                fontWeight: FontWeight.w700,
+                                                color: Color(0xFF1E293B),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          '${log['detalle']} • ${log['hash']}',
+                                          style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                                        ),
+                                        const Divider(height: 12, color: Color(0xFFE2E8F0)),
+                                      ],
+                                    ),
+                                  );
+                                }).toList(),
                         ),
                       ),
                     ],

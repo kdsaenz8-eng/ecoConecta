@@ -29,54 +29,8 @@ class _RecyclerHomeScreenState extends State<RecyclerHomeScreen> {
   double _recyclerLon = AppConstants.ecoconectaDefaultLon;
   final MapController _mapController = MapController();
 
-  // Lista de solicitudes en ruta (con datos de la base de datos municipal)
-  List<Map<String, dynamic>> _pickups = <Map<String, dynamic>>[
-    {
-      'id': 'SOL-01',
-      'generator_name': 'María Fernanda Córdoba',
-      'generator_phone': '3104567890',
-      'neighborhood': 'Kennedy',
-      'address_text': 'Calle 98 # 102-15, Casa de rejas verdes, Barrio Kennedy',
-      'waste_categories': <String>['Plástico y Botellas', 'Papel y Cartón Limpio'],
-      'estimated_volume': '1 o 2 bolsas medianas',
-      'status': 'Aceptada',
-      'latitude': 7.666925,
-      'longitude': -76.681140,
-      'photo_url':
-          'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=600&q=80',
-      'created_at': 'Hoy, 2:30 PM',
-    },
-    {
-      'id': 'SOL-02',
-      'generator_name': 'Supermercado El Ahorro',
-      'generator_phone': '3209876543',
-      'neighborhood': 'Centro',
-      'address_text': 'Carrera 103 # 94-20, Entrada de cargue, Centro',
-      'waste_categories': <String>['Papel y Cartón Limpio', 'Latas y Metales'],
-      'estimated_volume': 'Varios bultos de negocio',
-      'status': 'En_Ruta',
-      'latitude': 7.671042,
-      'longitude': -76.683015,
-      'photo_url':
-          'https://images.unsplash.com/photo-1605600659908-0ef719419d41?auto=format&fit=crop&w=600&q=80',
-      'created_at': 'Hoy, 3:10 PM',
-    },
-    {
-      'id': 'SOL-03',
-      'generator_name': 'Panadería La Sultana',
-      'generator_phone': '3125554433',
-      'neighborhood': 'Los Balsos',
-      'address_text': 'Calle 95 # 105-12, Los Balsos',
-      'waste_categories': <String>['Vidrio y Envases'],
-      'estimated_volume': '1 bulto o costal',
-      'status': 'Pendiente',
-      'latitude': 7.674580,
-      'longitude': -76.678020,
-      'photo_url':
-          'https://images.unsplash.com/photo-1596704017254-9b121068fb31?auto=format&fit=crop&w=600&q=80',
-      'created_at': 'Hoy, 3:45 PM',
-    },
-  ];
+  // Lista de solicitudes en ruta (cargada exclusivamente desde la API real)
+  List<Map<String, dynamic>> _pickups = <Map<String, dynamic>>[];
 
   @override
   void initState() {
@@ -128,13 +82,23 @@ class _RecyclerHomeScreenState extends State<RecyclerHomeScreen> {
         responseData = res.data;
       }
 
-      if (mounted && responseData != null && responseData is List && responseData.isNotEmpty) {
-        setState(() {
-          _pickups = responseData.cast<Map<String, dynamic>>();
-        });
+      if (mounted) {
+        if (responseData != null && responseData is List) {
+          setState(() {
+            _pickups = responseData.cast<Map<String, dynamic>>();
+          });
+        } else {
+          setState(() {
+            _pickups = <Map<String, dynamic>>[];
+          });
+        }
       }
     } catch (_) {
-      // Mantiene datos locales de respaldo si el servidor no está en línea en este instante
+      if (mounted) {
+        setState(() {
+          _pickups = <Map<String, dynamic>>[];
+        });
+      }
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -505,7 +469,21 @@ class _RecyclerHomeScreenState extends State<RecyclerHomeScreen> {
                       ),
                       const SizedBox(height: 10),
 
-                      ..._pickups.map((Map<String, dynamic> p) {
+                      if (_pickups.isEmpty)
+                        Container(
+                          padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 16),
+                          alignment: Alignment.center,
+                          child: const Text(
+                            'No hay solicitudes pendientes en este momento.',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Color(0xFF64748B),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        )
+                      else
+                        ..._pickups.map((Map<String, dynamic> p) {
                         final String id = p['id'].toString();
                         final String status = p['status']?.toString() ?? 'Pendiente';
                         final String generatorName =

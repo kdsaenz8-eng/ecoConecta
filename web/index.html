@@ -1102,12 +1102,12 @@
           <div class="campo">
             <label for="ingreso-correo">Correo electrónico</label>
             <input type="email" id="ingreso-correo" required placeholder="tucorreo@ejemplo.com"
-              value="maria.cordoba@ecoconecta.co">
+              value="">
           </div>
 
           <div class="campo">
             <label for="ingreso-clave">Contraseña</label>
-            <input type="password" id="ingreso-clave" required value="EcoPassword2026">
+            <input type="password" id="ingreso-clave" required value="" placeholder="Ingresa tu contraseña">
           </div>
 
           <button type="submit" class="btn-principal" style="margin-top: 10px;" id="btn-entrar-submit">
@@ -1520,15 +1520,12 @@
       }
     }
 
-    // Recicladores reales del municipio registrados en base de datos
-    let listaRecicladores = [
-      { id: 'f2f8aab9-0dba-443a-b326-17de60dbf212', nombre: 'Carlos Andrés Mena', name: 'Carlos Andrés Mena', full_name: 'Carlos Andrés Mena', sector: 'Barrio El Bosque' },
-      { id: '7ceff36a-d79a-404b-a8a0-d3da150ccf1c', nombre: 'Asociación Urabá Verde', name: 'Asociación Urabá Verde', full_name: 'Asociación Urabá Verde', sector: 'Barrio Los Balsos' }
-    ];
+    // Datos cargados dinámicamente desde la API real (sin datos simulados ni estáticos)
+    let listaRecicladores = [];
+    let solicitudes = [];
+    let registrosAuditoria = [];
 
     function cargarRecicladoresDesdeBD() {
-      // Directorio de recicladores del municipio registrados en base de datos.
-      // Sincroniza el conteo institucional y el selector de despacho del Administrador.
       const conteoEl = document.getElementById('admin-conteo-recicladores');
       if (conteoEl) {
         conteoEl.innerText = String(listaRecicladores.length);
@@ -1537,63 +1534,6 @@
         renderizarPortalAdmin();
       }
     }
-
-    // Solicitudes activas en el municipio con fotos reales de los residuos
-    let solicitudes = [
-      {
-        id: 'SOL-01',
-        generador_nombre: 'María Fernanda Córdoba',
-        generador_telefono: '3104567890',
-        barrio: 'Kennedy',
-        direccion: 'Calle 98 # 102-15, Casa de rejas verdes, Barrio Kennedy',
-        materiales: ['Plástico y Botellas', 'Papel y Cartón Limpio'],
-        volumen: '1 o 2 bolsas medianas',
-        estado: 'Aceptada',
-        lat: 7.6669,
-        lon: -76.6811,
-        reciclador_id: 'rec-01',
-        reciclador_nombre: 'Carlos Andrés Mena',
-        foto_url: 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=600&q=80',
-        hora: 'Hoy, 2:30 PM'
-      },
-      {
-        id: 'SOL-02',
-        generador_nombre: 'Supermercado El Ahorro',
-        generador_telefono: '3209876543',
-        barrio: 'Centro',
-        direccion: 'Carrera 103 # 94-20, Entrada de cargue, Centro',
-        materiales: ['Papel y Cartón Limpio', 'Latas y Metales'],
-        volumen: 'Varios bultos de negocio',
-        estado: 'En_Ruta',
-        lat: 7.6710,
-        lon: -76.6830,
-        reciclador_id: 'rec-01',
-        reciclador_nombre: 'Carlos Andrés Mena',
-        foto_url: 'https://images.unsplash.com/photo-1605600659908-0ef719419d41?auto=format&fit=crop&w=600&q=80',
-        hora: 'Hoy, 3:10 PM'
-      },
-      {
-        id: 'SOL-03',
-        generador_nombre: 'Panadería La Sultana',
-        generador_telefono: '3125554433',
-        barrio: 'Los Balsos',
-        direccion: 'Calle 95 # 105-12, Los Balsos',
-        materiales: ['Vidrio y Envases'],
-        volumen: '1 bulto o costal',
-        estado: 'Pendiente',
-        lat: 7.6745,
-        lon: -76.6780,
-        reciclador_id: null,
-        reciclador_nombre: 'Pendiente de asignar',
-        foto_url: 'https://images.unsplash.com/photo-1596704017254-9b121068fb31?auto=format&fit=crop&w=600&q=80',
-        hora: 'Hoy, 3:45 PM'
-      }
-    ];
-
-    let registrosAuditoria = [
-      { fecha: '8 de noviembre de 2026, 2:30 PM', usuario: 'maria.cordoba@ecoconecta.co', accion: 'Aceptó política de datos al registrarse' },
-      { fecha: '8 de noviembre de 2026, 2:42 PM', usuario: 'carlos.mena@recicladoresuraba.org', accion: 'Aceptó política de datos al registrarse' }
-    ];
 
     // =========================================================================
     // CANAL DE COMUNICACIÓN EN VIVO (WEBSOCKET REAL & MULTIPESTAÑA)
@@ -2259,49 +2199,14 @@
 
         if (resp.ok) {
           const resultado = await resp.json();
-          const nueva = {
-            id: resultado.id || ('SOL-' + (solicitudes.length + 1).toString().padStart(2, '0')),
-            generador_id: usuarioActivo.id,
-            generador_nombre: usuarioActivo.nombre,
-            generador_telefono: usuarioActivo.telefono,
-            barrio: usuarioActivo.barrio,
-            direccion: direccionTexto,
-            materiales: [...materialesElegidos],
-            volumen: volumenTexto,
-            estado: 'Pendiente',
-            lat: latExacta,
-            lon: lonExacta,
-            reciclador_id: null,
-            reciclador_nombre: 'Pendiente de asignar',
-            foto_url: fotoFinal,
-            hora: 'Hace un momento'
-          };
-          emitirCambio('NUEVA_ENTREGA', nueva);
           mostrarAviso('¡Solicitud guardada en base de datos real con coordenadas exactas!');
+          await cargarSolicitudesDesdeBD();
         } else {
-          throw new Error('Error al guardar');
+          const errorData = await resp.json().catch(() => ({}));
+          throw new Error(errorData.detail || 'Error al guardar la solicitud en el servidor');
         }
       } catch (err) {
-        // Fallback local garantizado
-        const nuevaLocal = {
-          id: 'SOL-' + (solicitudes.length + 1).toString().padStart(2, '0'),
-          generador_id: usuarioActivo.id,
-          generador_nombre: usuarioActivo.nombre,
-          generador_telefono: usuarioActivo.telefono,
-          barrio: usuarioActivo.barrio,
-          direccion: direccionTexto,
-          materiales: [...materialesElegidos],
-          volumen: volumenTexto,
-          estado: 'Pendiente',
-          lat: latExacta,
-          lon: lonExacta,
-          reciclador_id: null,
-          reciclador_nombre: 'Pendiente de asignar',
-          foto_url: fotoFinal,
-          hora: 'Hace un momento'
-        };
-        emitirCambio('NUEVA_ENTREGA', nuevaLocal);
-        mostrarAviso('¡Solicitud creada! Notificación con foto enviada a los recicladores');
+        mostrarAviso('Error al registrar solicitud: ' + (err.message || 'No se pudo conectar con el servidor'));
       }
 
       // Limpiar preview
@@ -2519,7 +2424,11 @@
     // =========================================================================
     function renderizarPortalAdmin() {
       const tabla = document.getElementById('tabla-admin-solicitudes');
-      tabla.innerHTML = solicitudes.map(s => `
+      if (tabla) {
+        if (solicitudes.length === 0) {
+          tabla.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 24px; color: var(--texto-suave);">No hay solicitudes de recolección en el sistema municipal.</td></tr>';
+        } else {
+          tabla.innerHTML = solicitudes.map(s => `
         <tr>
           <td>
             <strong>${s.generador_nombre}</strong>
@@ -2548,12 +2457,20 @@
           </td>
         </tr>
       `).join('');
+        }
+      }
 
       // Registro de auditoría
       const auditDiv = document.getElementById('registro-auditoria-admin');
-      auditDiv.innerHTML = registrosAuditoria.map(a => `
-        <div>• ${a.fecha} — <strong>${a.usuario}</strong>: ${a.accion}</div>
-      `).join('');
+      if (auditDiv) {
+        if (registrosAuditoria.length === 0) {
+          auditDiv.innerHTML = '<div style="color: var(--texto-suave); padding: 8px 0;">No hay registros de auditoría reportados.</div>';
+        } else {
+          auditDiv.innerHTML = registrosAuditoria.map(a => `
+            <div>• ${a.fecha} — <strong>${a.usuario}</strong>: ${a.accion}</div>
+          `).join('');
+        }
+      }
     }
 
     async function asignarRecicladorDesdeAdmin(solicitudId, recicladorId) {

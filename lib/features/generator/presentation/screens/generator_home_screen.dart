@@ -42,50 +42,12 @@ class _GeneratorHomeScreenState extends State<GeneratorHomeScreen> {
   double _currentLat = AppConstants.ecoconectaDefaultLat;
   double _currentLon = AppConstants.ecoconectaDefaultLon;
   bool _hasPhoto = true;
-  String _photoUrl =
-      'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=600&q=80';
+  String _photoUrl = '';
   bool _isPublishing = false;
   bool _isLoadingHistory = false;
 
-  // Historial de solicitudes (con semillas idénticas a la base de datos municipal para resiliencia offline)
-  List<Map<String, dynamic>> _history = <Map<String, dynamic>>[
-    {
-      'id': 'SOL-01',
-      'generator_name': 'María Fernanda Córdoba',
-      'waste_categories': <String>['Plástico y Botellas', 'Papel y Cartón Limpio'],
-      'estimated_volume': '1 o 2 bolsas medianas',
-      'status': 'Aceptada',
-      'address_text': 'Calle 98 # 102-15, Casa de rejas verdes, Barrio Kennedy',
-      'recycler_name': 'Carlos Andrés Mena',
-      'photo_url':
-          'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=600&q=80',
-      'created_at': 'Hoy, 2:30 PM',
-    },
-    {
-      'id': 'SOL-02',
-      'generator_name': 'Supermercado El Ahorro',
-      'waste_categories': <String>['Papel y Cartón Limpio', 'Latas y Metales'],
-      'estimated_volume': 'Varios bultos de negocio',
-      'status': 'En_Ruta',
-      'address_text': 'Carrera 103 # 94-20, Entrada de cargue, Centro',
-      'recycler_name': 'Carlos Andrés Mena',
-      'photo_url':
-          'https://images.unsplash.com/photo-1605600659908-0ef719419d41?auto=format&fit=crop&w=600&q=80',
-      'created_at': 'Hoy, 3:10 PM',
-    },
-    {
-      'id': 'SOL-03',
-      'generator_name': 'Panadería La Sultana',
-      'waste_categories': <String>['Vidrio y Envases'],
-      'estimated_volume': '1 bulto o costal',
-      'status': 'Pendiente',
-      'address_text': 'Calle 95 # 105-12, Los Balsos',
-      'recycler_name': 'Pendiente de asignar',
-      'photo_url':
-          'https://images.unsplash.com/photo-1596704017254-9b121068fb31?auto=format&fit=crop&w=600&q=80',
-      'created_at': 'Hoy, 3:45 PM',
-    },
-  ];
+  // Historial de solicitudes (cargado exclusivamente desde la API real)
+  List<Map<String, dynamic>> _history = <Map<String, dynamic>>[];
 
   @override
   void initState() {
@@ -170,7 +132,6 @@ class _GeneratorHomeScreenState extends State<GeneratorHomeScreen> {
   Future<void> _loadHistory() async {
     setState(() => _isLoadingHistory = true);
     try {
-      // En producción FastAPI el endpoint es /pickups/my-requests
       dynamic responseData;
       try {
         final res = await _dioClient.dio.get<List<dynamic>>('/pickups/my-requests');
@@ -180,13 +141,23 @@ class _GeneratorHomeScreenState extends State<GeneratorHomeScreen> {
         responseData = res.data;
       }
 
-      if (mounted && responseData != null && responseData is List && responseData.isNotEmpty) {
-        setState(() {
-          _history = responseData.cast<Map<String, dynamic>>();
-        });
+      if (mounted) {
+        if (responseData != null && responseData is List) {
+          setState(() {
+            _history = responseData.cast<Map<String, dynamic>>();
+          });
+        } else {
+          setState(() {
+            _history = <Map<String, dynamic>>[];
+          });
+        }
       }
     } catch (_) {
-      // Mantiene datos locales si no hay conexión
+      if (mounted) {
+        setState(() {
+          _history = <Map<String, dynamic>>[];
+        });
+      }
     } finally {
       if (mounted) {
         setState(() => _isLoadingHistory = false);
@@ -208,7 +179,7 @@ class _GeneratorHomeScreenState extends State<GeneratorHomeScreen> {
     setState(() => _isPublishing = true);
 
     try {
-      final response = await _dioClient.dio.post<dynamic>(
+      await _dioClient.dio.post<dynamic>(
         '/pickups',
         data: <String, dynamic>{
           'waste_categories': _selectedMaterials.toList(),
@@ -216,45 +187,35 @@ class _GeneratorHomeScreenState extends State<GeneratorHomeScreen> {
           'latitude': _currentLat,
           'longitude': _currentLon,
           'address_text': _addressController.text.trim(),
-          'photo_url': _hasPhoto ? _photoUrl : null,
+          'photo_url': _hasPhoto && _photoUrl.isNotEmpty ? _photoUrl : null,
           'notes': 'Publicado desde aplicación móvil EcoConecta',
         },
       );
 
-      final Map<String, dynamic> newPickup = <String, dynamic>{
-        'id': (response.data is Map && response.data['id'] != null)
-            ? response.data['id'].toString()
-            : 'SOL-${DateTime.now().millisecondsSinceEpoch}',
-        'generator_name': widget.userName,
-        'waste_categories': _selectedMaterials.toList(),
-        'estimated_volume': _selectedVolume,
-        'status': 'Pendiente',
-        'address_text': _addressController.text.trim(),
-        'recycler_name': 'Pendiente de asignar',
-        'photo_url': _photoUrl,
-        'created_at': 'Ahora mismo',
-      };
-
-      setState(() {
-        _history.insert(0, newPickup);
-      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            backgroundColor: Color(0xFF15803D),
+            content: Text('¡Aviso de entrega enviado con éxito a la red municipal!'),
+          ),
+        );
+      }
+      await _loadHistory();
     } catch (_) {
-      // Registro local inmediato para resiliencia total
-      final Map<String, dynamic> fallbackPickup = <String, dynamic>{
-        'id': 'SOL-${DateTime.now().millisecondsSinceEpoch}',
-        'generator_name': widget.userName,
-        'waste_categories': _selectedMaterials.toList(),
-        'estimated_volume': _selectedVolume,
-        'status': 'Pendiente',
-        'address_text': _addressController.text.trim(),
-        'recycler_name': 'Pendiente de asignar',
-        'photo_url': _photoUrl,
-        'created_at': 'Ahora mismo',
-      };
-      setState(() {
-        _history.insert(0, fallbackPickup);
-      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            backgroundColor: AppTheme.errorRed,
+            content: Text('Error al enviar la solicitud al servidor municipal.'),
+          ),
+        );
+      }
     } finally {
+      if (mounted) {
+        setState(() => _isPublishing = false);
+      }
+    }
+  }
       if (mounted) {
         setState(() => _isPublishing = false);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -672,7 +633,21 @@ class _GeneratorHomeScreenState extends State<GeneratorHomeScreen> {
                         style: TextStyle(fontSize: 12.5, color: Color(0xFF64748B)),
                       ),
                       const SizedBox(height: 16),
-                      ..._history.map((Map<String, dynamic> item) {
+                      if (_history.isEmpty)
+                        Container(
+                          padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 16),
+                          alignment: Alignment.center,
+                          child: const Text(
+                            'No tienes solicitudes de recolección activas.',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Color(0xFF64748B),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        )
+                      else
+                        ..._history.map((Map<String, dynamic> item) {
                         final dynamic cats = item['waste_categories'];
                         final String catsStr = cats is List ? cats.join(', ') : cats.toString();
                         final String status = item['status']?.toString() ?? 'Pendiente';
