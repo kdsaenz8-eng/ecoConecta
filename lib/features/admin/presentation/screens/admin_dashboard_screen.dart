@@ -368,6 +368,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         final String vol = s['estimated_volume']?.toString() ?? '1 bolsa';
                         final String status = s['status']?.toString() ?? 'Pendiente';
                         final String recName = s['recycler_name']?.toString() ?? 'Pendiente de asignar';
+                        final String? currentRecId = s['recycler_id']?.toString();
 
                         return Container(
                           margin: const EdgeInsets.only(bottom: 12),
@@ -451,8 +452,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                       child: DropdownButtonHideUnderline(
                                         child: DropdownButton<String>(
                                           isExpanded: true,
-                                          value: _recicladores.any((r) => r['id'].toString() == (p['recycler_id']?.toString() ?? ''))
-                                              ? p['recycler_id']?.toString()
+                                          value: _recicladores.any((r) => r['id'].toString() == currentRecId)
+                                              ? currentRecId
                                               : null,
                                           hint: const Text(
                                             'Seleccionar reciclador...',
