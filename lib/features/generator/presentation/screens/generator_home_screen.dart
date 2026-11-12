@@ -216,19 +216,6 @@ class _GeneratorHomeScreenState extends State<GeneratorHomeScreen> {
       }
     }
   }
-      if (mounted) {
-        setState(() => _isPublishing = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            backgroundColor: Color(0xFF15803D),
-            content: Text(
-              '¡Aviso enviado con éxito a los recicladores de tu barrio!',
-            ),
-          ),
-        );
-      }
-    }
-  }
 
   Widget _buildMaterialChip(String name, IconData icon) {
     final bool isSelected = _selectedMaterials.contains(name);
@@ -496,18 +483,7 @@ class _GeneratorHomeScreenState extends State<GeneratorHomeScreen> {
                                 side: const BorderSide(color: Color(0xFF86EFAC)),
                               ),
                             ),
-                            onPressed: () {
-                              setState(() {
-                                _currentLat = 7.666925;
-                                _currentLon = -76.681140;
-                              });
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('🎯 Coordenadas GPS fijadas con éxito.'),
-                                  duration: Duration(seconds: 1),
-                                ),
-                              );
-                            },
+                            onPressed: _fetchCurrentLocation,
                             icon: const Icon(Icons.my_location, size: 14),
                             label: const Text('🎯 Usar GPS actual', style: TextStyle(fontSize: 11)),
                           ),

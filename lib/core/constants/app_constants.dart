@@ -2,7 +2,6 @@
 /// sectores barriales del municipio (Antioquia) y configuración dinámica de endpoints API.
 library;
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class AppConstants {

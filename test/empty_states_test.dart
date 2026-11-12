@@ -13,11 +13,14 @@ void main() {
       await tester.pumpWidget(
         const MaterialApp(
           home: Scaffold(
-            body: AdminDashboardScreen(userName: 'Coordinador PGIRS'),
+            body: AdminDashboardScreen(
+              userName: 'Coordinador PGIRS',
+              autoLoad: false,
+            ),
           ),
         ),
       );
-      await tester.pump();
+      await tester.pumpAndSettle();
 
       // Verifica que no aparezcan datos simulados antiguos
       expect(find.text('SOL-01'), findsNothing);
@@ -25,8 +28,9 @@ void main() {
       expect(find.text('SOL-03'), findsNothing);
 
       // Verifica que se muestre el estado vacío formal
-      expect(find.text('No hay solicitudes registradas.'), findsOneWidget);
+      expect(find.text('No hay solicitudes de recolección en el sistema municipal.'), findsOneWidget);
       expect(find.text('No hay registros de auditoría reportados.'), findsOneWidget);
     },
   );
 }
+

@@ -10,15 +10,22 @@ import '../../../../core/widgets/institutional_header.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   final String userName;
+  final DioClient? dioClient;
+  final bool autoLoad;
 
-  const AdminDashboardScreen({super.key, required this.userName});
+  const AdminDashboardScreen({
+    super.key,
+    required this.userName,
+    this.dioClient,
+    this.autoLoad = true,
+  });
 
   @override
   State<AdminDashboardScreen> createState() => _AdminDashboardScreenState();
 }
 
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
-  final DioClient _dioClient = DioClient();
+  late final DioClient _dioClient;
   bool _isLoading = false;
 
   int _conteoGeneradores = 0;
@@ -36,7 +43,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   @override
   void initState() {
     super.initState();
-    _loadAllData();
+    _dioClient = widget.dioClient ?? DioClient();
+    if (widget.autoLoad) {
+      _loadAllData();
+    }
   }
 
   Future<void> _loadAllData() async {
