@@ -67,9 +67,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         }
       } catch (_) {}
 
-      // 2. Directorio de recicladores del municipio
-      // Mantiene los recicladores oficiales de Chigorodó sin disparar errores 404
-      // mientras se completa el despliegue del endpoint en el contenedor de producción.
+      // 2. Directorio real de recicladores del municipio desde la API
+      try {
+        final recResp = await _dioClient.dio.get<List<dynamic>>('/users/recyclers');
+        if (recResp.data != null && recResp.data is List) {
+          setState(() {
+            _recicladores = recResp.data!.cast<Map<String, dynamic>>();
+            _conteoRecicladores = _recicladores.length;
+          });
+        }
+      } catch (_) {}
 
       // 3. Cargar solicitudes
       try {

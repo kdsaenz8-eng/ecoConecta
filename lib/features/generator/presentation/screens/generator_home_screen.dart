@@ -36,12 +36,10 @@ class _GeneratorHomeScreenState extends State<GeneratorHomeScreen> {
     'Papel y Cartón Limpio',
   };
   String _selectedVolume = '1 o 2 bolsas medianas';
-  final TextEditingController _addressController = TextEditingController(
-    text: 'Calle 98 # 102-15, Casa de rejas verdes, Barrio Kennedy',
-  );
+  final TextEditingController _addressController = TextEditingController();
   double _currentLat = AppConstants.ecoconectaDefaultLat;
   double _currentLon = AppConstants.ecoconectaDefaultLon;
-  bool _hasPhoto = true;
+  bool _hasPhoto = false;
   String _photoUrl = '';
   bool _isPublishing = false;
   bool _isLoadingHistory = false;

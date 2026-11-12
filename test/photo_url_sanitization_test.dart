@@ -18,61 +18,19 @@ void main() {
       expect(AppConstants.sanitizePhotoUrl(validUrl), validUrl);
     });
 
-    test('Reemplaza cadenas Data URI base64 gigantes por URL representativa <= 500 caracteres', () {
-      // Simula un Data URI base64 de cámara de más de 100 KB
-      final String hugeBase64 = 'data:image/png;base64,${'A' * 100000}';
-      final String? sanitized = AppConstants.sanitizePhotoUrl(
-        hugeBase64,
-        categories: <String>['Plástico y Botellas'],
-      );
+    test('Permite cadenas Data URI base64 reales para persistencia en el backend', () {
+      const String dummyBase64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+      final String? sanitized = AppConstants.sanitizePhotoUrl(dummyBase64);
 
       expect(sanitized, isNotNull);
-      expect(sanitized!.startsWith('https://'), isTrue);
-      expect(sanitized.length, lessThanOrEqualTo(500));
-      expect(sanitized.startsWith('data:'), isFalse);
+      expect(sanitized!.startsWith('data:image/'), isTrue);
     });
 
-    test('Reemplaza URLs arbitrarias mayores a 500 caracteres por URL representativa válida', () {
+    test('Descarta URLs arbitrarias mayores a 500 caracteres sin inventar datos simulados', () {
       final String over500Url = 'https://example.com/very/long/path/${'x' * 600}.jpg';
-      final String? sanitized = AppConstants.sanitizePhotoUrl(
-        over500Url,
-        categories: <String>['Vidrio y Envases'],
-      );
+      final String? sanitized = AppConstants.sanitizePhotoUrl(over500Url);
 
-      expect(sanitized, isNotNull);
-      expect(sanitized!.length, lessThanOrEqualTo(500));
-      expect(sanitized, contains('unsplash.com'));
-    });
-
-    test('Asigna imágenes de evidencia coherentes según la categoría seleccionada', () {
-      final String dummyBase64 = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD...';
-
-      final String? vidrio = AppConstants.sanitizePhotoUrl(
-        dummyBase64,
-        categories: <String>['Vidrio y Envases'],
-      );
-      final String? carton = AppConstants.sanitizePhotoUrl(
-        dummyBase64,
-        categories: <String>['Papel y Cartón Limpio'],
-      );
-      final String? metal = AppConstants.sanitizePhotoUrl(
-        dummyBase64,
-        categories: <String>['Latas y Metales'],
-      );
-      final String? plastico = AppConstants.sanitizePhotoUrl(
-        dummyBase64,
-        categories: <String>['Plástico y Botellas'],
-      );
-
-      expect(vidrio, isNotNull);
-      expect(carton, isNotNull);
-      expect(metal, isNotNull);
-      expect(plastico, isNotNull);
-
-      expect(vidrio!.length, lessThanOrEqualTo(500));
-      expect(carton!.length, lessThanOrEqualTo(500));
-      expect(metal!.length, lessThanOrEqualTo(500));
-      expect(plastico!.length, lessThanOrEqualTo(500));
+      expect(sanitized, isNull);
     });
 
     test('resolvePhotoUrl convierte rutas relativas del backend en URLs absolutas alcanzables', () {

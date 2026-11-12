@@ -1276,8 +1276,8 @@
 
           <div class="campo">
             <label for="gen-direccion">3. Ubicación exacta en el municipio:</label>
-            <input type="text" id="gen-direccion" required
-              value="Calle 98 # 102-15, Casa de rejas verdes, Barrio Kennedy">
+            <input type="text" id="gen-direccion" required placeholder="Ingresa tu dirección exacta o referencia en el municipio"
+              value="">
             <small style="color: var(--texto-suave); margin-top: 4px; display: block;">Haz clic o arrastra el marcador
               en el mapa para fijar las coordenadas exactas de tu puerta.</small>
           </div>
@@ -1533,16 +1533,16 @@
 
         if (resp && resp.ok) {
           const datos = await resp.json();
-          if (Array.isArray(datos) && datos.length > 0) {
+          if (Array.isArray(datos)) {
             solicitudes = datos.map(p => ({
               id: p.id,
               generador_id: p.generator_id,
-              generador_nombre: p.generator_name || 'Generador Comunitario',
+              generador_nombre: p.generator_name || 'Generador',
               generador_telefono: p.generator_phone || p.phone || '',
-              barrio: p.neighborhood || p.generator_neighborhood || 'Sector Urbano',
-              direccion: p.address_text || 'Coordenadas GPS fijadas en mapa',
+              barrio: p.neighborhood || p.generator_neighborhood || '',
+              direccion: p.address_text || '',
               materiales: desnormalizarCategorias(p.waste_categories),
-              volumen: p.estimated_volume,
+              volumen: p.estimated_volume || '',
               estado: (p.status === 'PENDIENTE' || p.status === 'Pendiente') ? 'Pendiente' : (p.status === 'ACEPTADA' ? 'Aceptada' : (p.status === 'EN_CAMINO' ? 'En_Ruta' : (p.status === 'COMPLETADA' ? 'Completada' : p.status))),
               lat: parseFloat(p.latitude) || 7.666925,
               lon: parseFloat(p.longitude) || -76.681140,
@@ -1564,13 +1564,25 @@
     let solicitudes = [];
     let registrosAuditoria = [];
 
-    function cargarRecicladoresDesdeBD() {
-      const conteoEl = document.getElementById('admin-conteo-recicladores');
-      if (conteoEl) {
-        conteoEl.innerText = String(listaRecicladores.length);
-      }
-      if (usuarioActivo && usuarioActivo.rol === 'ADMINISTRADOR') {
-        renderizarPortalAdmin();
+    async function cargarRecicladoresDesdeBD() {
+      if (!tokenJwtActivo) return;
+      try {
+        const resp = await apiFetchSeguro('/api/v1/users/recyclers');
+        if (resp && resp.ok) {
+          const datos = await resp.json();
+          if (Array.isArray(datos)) {
+            listaRecicladores = datos;
+            const conteoEl = document.getElementById('admin-conteo-recicladores');
+            if (conteoEl) {
+              conteoEl.innerText = String(listaRecicladores.length);
+            }
+            if (usuarioActivo && usuarioActivo.rol === 'ADMINISTRADOR') {
+              renderizarPortalAdmin();
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('[RECYCLERS] Consulta de directorio cancelada:', err);
       }
     }
 
@@ -2030,6 +2042,10 @@
       }
 
       if (usuarioActivo.rol === 'GENERADOR') {
+        const inputDir = document.getElementById('gen-direccion');
+        if (inputDir && !inputDir.value && usuarioActivo.address_reference) {
+          inputDir.value = usuarioActivo.address_reference;
+        }
         renderizarHistorialGenerador();
         setTimeout(inicializarMapaSelectorGenerador, 250);
       }
@@ -2204,23 +2220,17 @@
 
       if (!verificarRutaProtegida('GENERADOR')) return;
 
-      // Si el usuario adjuntó una foto real (Base64), la enviamos al backend para que la guarde en disco (/api/v1/uploads/...)
-      let fotoAEnviar = fotoActualSubida;
-      if (!fotoAEnviar) {
-        if (materialesElegidos.some(m => m.includes('Vidrio') || m === 'VIDRIO')) {
-          fotoAEnviar = 'https://images.unsplash.com/photo-1596704017254-9b121068fb31?auto=format&fit=crop&w=600&q=80';
-        } else if (materialesElegidos.some(m => m.includes('Cartón') || m.includes('Papel') || m === 'CARTON')) {
-          fotoAEnviar = 'https://images.unsplash.com/photo-1605600659908-0ef719419d41?auto=format&fit=crop&w=600&q=80';
-        } else if (materialesElegidos.some(m => m.includes('Metal') || m.includes('Lata') || m === 'METAL')) {
-          fotoAEnviar = 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=600&q=80';
-        } else {
-          fotoAEnviar = 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=600&q=80';
-        }
-      }
+      // Foto real tomada por el usuario o null si no se adjuntó evidencia (sin datos simulados)
+      const fotoAEnviar = fotoActualSubida || null;
 
       const latExacta = parseFloat(document.getElementById('gen-lat').value) || 7.666925;
       const lonExacta = parseFloat(document.getElementById('gen-lon').value) || -76.681140;
-      const direccionTexto = document.getElementById('gen-direccion').value;
+      const direccionTexto = document.getElementById('gen-direccion').value.trim();
+      if (!direccionTexto) {
+        mostrarAviso('Por favor ingresa la dirección o referencia exacta de tu recolección.');
+        return;
+      }
+      const volumenTexto = document.getElementById('gen-volumen').value;
       const volumenTexto = document.getElementById('gen-volumen').value;
 
       // Inserción persistente en Backend / BD Real protegida con JWT
@@ -2425,7 +2435,7 @@
 
         const fotoHtml = p.foto_url ? `
           <div style="margin-bottom: 8px; border-radius: 8px; overflow: hidden; border: 1px solid #e5e7eb;">
-            <img src="${p.foto_url}" alt="Foto real de residuos" style="width: 100%; height: 120px; object-fit: cover; display: block;" onerror="this.src='https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=600&q=80'">
+            <img src="${resolverUrlFoto(p.foto_url)}" alt="Foto real de residuos" style="width: 100%; height: 120px; object-fit: cover; display: block;" onerror="this.style.display='none'">
           </div>
         ` : '';
 

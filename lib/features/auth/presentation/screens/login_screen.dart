@@ -56,9 +56,8 @@ class _LoginScreenState extends State<LoginScreen> {
   void initState() {
     super.initState();
     _authService = widget.authService ?? AuthService();
-    // Pre-carga amigable idéntica a la vista web para demostraciones
-    _loginEmailController.text = 'maria.cordoba@ecoconecta.co';
-    _loginPasswordController.text = 'EcoPassword2026';
+    _loginEmailController.text = '';
+    _loginPasswordController.text = '';
   }
 
   @override
