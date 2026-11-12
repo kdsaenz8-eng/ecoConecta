@@ -145,12 +145,28 @@ class _RecyclerHomeScreenState extends State<RecyclerHomeScreen> {
   }
 
   Future<void> _updateStatus(String id, String newStatus) async {
+    String backendStatus = newStatus;
+    if (newStatus == 'En_Ruta' || newStatus == 'En camino') {
+      backendStatus = 'EN_CAMINO';
+    } else if (newStatus == 'Completada') {
+      backendStatus = 'COMPLETADA';
+    } else if (newStatus == 'Aceptada') {
+      backendStatus = 'ACEPTADA';
+    }
+
     try {
-      await _dioClient.dio.post<dynamic>(
+      await _dioClient.dio.patch<dynamic>(
         '/pickups/$id/status',
-        data: <String, dynamic>{'status': newStatus},
+        data: <String, dynamic>{'status': backendStatus},
       );
-    } catch (_) {}
+    } catch (_) {
+      try {
+        await _dioClient.dio.post<dynamic>(
+          '/pickups/$id/status',
+          data: <String, dynamic>{'status': backendStatus},
+        );
+      } catch (_) {}
+    }
 
     setState(() {
       final int idx = _pickups.indexWhere((Map<String, dynamic> p) => p['id'].toString() == id);

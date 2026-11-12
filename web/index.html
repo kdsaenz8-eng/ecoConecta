@@ -1525,7 +1525,7 @@
         if (usuarioActivo && usuarioActivo.rol === 'GENERADOR') {
           ruta = '/api/v1/pickups/my-requests';
         } else if (usuarioActivo && usuarioActivo.rol === 'RECICLADOR') {
-          ruta = '/api/v1/pickups/pending';
+          ruta = '/api/v1/pickups';
         }
 
         let resp = await apiFetchSeguro(ruta);
@@ -1542,11 +1542,11 @@
               generador_id: p.generator_id,
               generador_nombre: p.generator_name || 'Generador',
               generador_telefono: p.generator_phone || p.phone || '',
-              barrio: p.neighborhood || p.generator_neighborhood || '',
-              direccion: p.address_text || '',
+              barrio: p.neighborhood || p.generator_neighborhood || (p.approximate_zone ? p.approximate_zone.replace(/^Barrio\s*/i, '') : '') || '',
+              direccion: p.address_text || p.exact_address || '',
               materiales: desnormalizarCategorias(p.waste_categories),
               volumen: p.estimated_volume || '',
-              estado: (p.status === 'PENDIENTE' || p.status === 'Pendiente') ? 'Pendiente' : (p.status === 'ACEPTADA' ? 'Aceptada' : (p.status === 'EN_CAMINO' ? 'En_Ruta' : (p.status === 'COMPLETADA' ? 'Completada' : p.status))),
+              estado: (p.status === 'PENDIENTE' || p.status === 'Pendiente') ? 'Pendiente' : ((p.status === 'ACEPTADA' || p.status === 'Aceptada') ? 'Aceptada' : ((p.status === 'EN_CAMINO' || p.status === 'En_Ruta' || p.status === 'En camino') ? 'En_Ruta' : ((p.status === 'COMPLETADA' || p.status === 'Completada') ? 'Completada' : p.status))),
               lat: parseFloat(p.latitude) || 7.666925,
               lon: parseFloat(p.longitude) || -76.681140,
               reciclador_id: p.recycler_id,
@@ -2314,7 +2314,16 @@
     // =========================================================================
     function renderizarPortalReciclador() {
       // FILTRO ESTRICTO: Solo las entregas asignadas a este reciclador
-      const asignadasAMi = solicitudes.filter(s => s.reciclador_id === usuarioActivo.id);
+      const miId = usuarioActivo ? String(usuarioActivo.id || '').toLowerCase() : '';
+      const asignadasAMi = solicitudes.filter(s => {
+        if (!s) return false;
+        const recId = s.reciclador_id ? String(s.reciclador_id).toLowerCase() : '';
+        if (recId && recId === miId) return true;
+        if (usuarioActivo && usuarioActivo.rol === 'RECICLADOR' && (s.estado === 'Aceptada' || s.estado === 'En_Ruta' || s.estado === 'Completada')) {
+          return !recId || recId === miId;
+        }
+        return false;
+      });
       document.getElementById('reciclador-contador-puntos').innerText = `${asignadasAMi.length} entregas en tu ruta`;
 
       const lista = document.getElementById('lista-puntos-reciclador');
@@ -2372,13 +2381,43 @@
     async function actualizarEstadoEntrega(id, nuevoEstado) {
       if (!verificarRutaProtegida('RECICLADOR')) return;
 
+      // Normalizar estado para backend (FastAPI requiere EN_CAMINO o COMPLETADA)
+      let backendStatus = nuevoEstado;
+      if (nuevoEstado === 'En_Ruta' || nuevoEstado === 'En camino') {
+        backendStatus = 'EN_CAMINO';
+      } else if (nuevoEstado === 'Completada') {
+        backendStatus = 'COMPLETADA';
+      } else if (nuevoEstado === 'Aceptada') {
+        backendStatus = 'ACEPTADA';
+      }
+
+      const localEstado = (backendStatus === 'EN_CAMINO') ? 'En_Ruta' : (backendStatus === 'COMPLETADA') ? 'Completada' : nuevoEstado;
+
       try {
-        await apiFetchSeguro(`/api/v1/pickups/${id}/status`, {
-          method: 'POST',
-          body: JSON.stringify({ status: nuevoEstado })
+        let resp = await apiFetchSeguro(`/api/v1/pickups/${id}/status`, {
+          method: 'PATCH',
+          body: JSON.stringify({ status: backendStatus })
         });
-      } catch (_) { }
-      emitirCambio('CAMBIO_ESTADO', { id: id, nuevoEstado: nuevoEstado });
+        if (!resp || !resp.ok) {
+          resp = await apiFetchSeguro(`/api/v1/pickups/${id}/status`, {
+            method: 'POST',
+            body: JSON.stringify({ status: backendStatus })
+          });
+        }
+      } catch (err) {
+        console.warn('[STATUS UPDATE EXCEPTION]', err);
+      }
+
+      // Actualizar estado en memoria inmediatamente
+      const item = solicitudes.find(s => String(s.id) === String(id));
+      if (item) {
+        item.estado = localEstado;
+      }
+
+      renderizarPortalReciclador();
+      mostrarAviso(`Estado actualizado: ${formatearEstado(localEstado)}`, 'exito');
+      emitirCambio('CAMBIO_ESTADO', { id: id, nuevoEstado: localEstado });
+      sincronizarDesdeBaseDatosReal();
     }
 
     function actualizarMapaReciclador(puntos) {
